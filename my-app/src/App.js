@@ -1,11 +1,13 @@
-import logo from './logo.svg';
+
 import './App.css';
-import { Fragment } from 'react';
+import MyComponent from './MyComponent';
+import react, { useState } from 'react';
 
 function App() {
-  const name = '리액트';
-
-  return <div className="react">{name}</div>
+  const [count, setCount] = useState(0);
+  return(
+    <MyComponent count={count} setCount={setCount}>{count}</MyComponent>
+  )
 }
 
 export default App;

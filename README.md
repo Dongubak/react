@@ -276,3 +276,94 @@ export default App;
 
 className을 사용하여 css사용가능
 ![Alt text](image-5.png)
+
+
+### 3. 컴포넌트(component)
+
+#### component란?
+
+컴포넌트는 틀이라고 생각해도 된다. 하지만 컴포넌트의 기능은 단순한 템틀릿 이상이다. 데이터가 컴포넌트에 주어졌을 때 UI를 구성하거나, 라이브사이클 API를 사용하여 컴포넌트가 화면에서 나타날 때, 화면에서 사라질 때, 변화가 일어날 때 주어진 작업들을 처리할 수 있다. 또한 임의의 메서드를 만들어 특별한 기능을 수행할 수 있게 할 수 있다.
+
+#### 함수형 컴포넌트
+
+(공부하고 있는 교재에는 클래스형 컴포넌트도 설명하지만 함수형 컴포넌트로 바꿔서 작성하겠다)
+위의 설명에서 데이터가 컴포넌트에 주어졌을 때 UI를 구성한다고 했다. 컴포넌트가 데이터를 제공받을 때엔 props와 state를 사용한다.
+
+##### 자바스크립트 ES6내용
+자바스크립트의 클래스는 문법적 설탕이다. 클래스는 내부적으로 생성자함수에 의해 객체를 생성하며 생성자함수의 동작과 동일하다.
+
+화살표함수(arrow function)는 함수를 표현하는 새로운 방식이다. 일반 함수가 가리키는 this는 전역스코프이거나 메서드인 경우엔 속해있는 객체이지만, 화살표함수의 this는 상위스코프로 바인딩된다.
+
+##### 컴포넌트 생성 후 export하기
+![Alt text](image-6.png)
+```javascript
+const MyComponent = () => {
+   return (
+      <div>
+         나의 새롭고 멋진 컴포넌트
+      </div>
+   )
+};
+
+export default MyComponent;
+```
+
+##### 생성한 컴포넌트를 import하여 App.js에서 불러오기
+```javascript
+import './App.css';
+import MyComponent from './MyComponent';
+
+function App() {
+  return(
+    <MyComponent></MyComponent>
+  )
+}
+
+export default App;
+
+```
+![Alt text](image-7.png)
+
+#### props는 properties의 준말이다. 자식 컴포넌트에 props를 전달하여 자식컴포넌트에서 props값을 이용하여 기능을 만들 수 있다.
+
+##### 부모컴포넌트는 App.js이며 App.js에서 props를 전달하여 MyComponent에서 props값을 렌더링 해보겠다.
+
+![Alt text](image-9.png)
+
+##### MyComponent Component에서는 props를 매개변수로 받아 name 프로퍼티를 통해 부모로부터 원하는 값을 얻는다.
+
+![Alt text](image-10.png)
+
+##### default props를 통해 props값이 전달되지 않을때 default값을 지정해줄 수 있다.
+
+![Alt text](image-11.png)
+![Alt text](image-12.png)
+
+##### parent component tag 사이에 있는 내용을 child component에서 props로 전달 받을 수 있다.
+
+![Alt text](image-13.png)
+![Alt text](image-14.png)
+![Alt text](image-15.png)
+
+##### javascript object destructuring syntax을 이용하여 props값 받기
+![Alt text](image-16.png)
+
+##### state 간단한 사용과 소개
+
+교재에서는 클래스형 컴포넌트에서 state를 사용하는 예시가 나오지만 함수형 컴포넌트에서 useState를 통해 상태관리 코드를 간단하게 작성해보겠다.
+
+##### 컴포넌트구조
+   - App.js
+     - Counter.js
+
+App.js에서 count값을 관리하며 count state setter를 props로 counter에 전달하여 상태변경을 할 수 있도록 할 예정이다.
+
+##### 1. App.js에서 useState를 사용하여 상태를 만들고 MyComponent 컴포넌트에 props로 값을 전달해준다.
+
+![Alt text](image-17.png)
+
+##### 2. MyComponent에서 전달받은 props를 destructuring문법을 통해 setter를 받아 버튼에 이벤트핸들러에 연결해준다.
+![Alt text](image-18.png)
+
+##### 3. 메서드 분리
+![Alt text](image-19.png)
