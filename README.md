@@ -367,3 +367,51 @@ App.js에서 count값을 관리하며 count state setter를 props로 counter에 
 
 ##### 3. 메서드 분리
 ![Alt text](image-19.png)
+
+## 4. 이벤트 핸들링
+리액트의 이벤트 시스템은 html이벤트와 인터페이스가 동일하며 사용법이 유사하지만 몇개의 특징이 존재한다.
+1. 이벤트 이름은 CamelCase이다. (onClick, onKeyUp...)
+2. 이벤트에 실행할 함수 형태의 값을 전달한다. 이벤트 핸들러가 콜백함수를 실행하는 식으로 진행된다.
+3. DOM요소에만 event를 설정할 수 있으며 custom component에 onClick전달시 props로 전달한다.
+
+  - example
+    예시에서는 onClick과 혼동할 우려가 있어 onClickUp이라고 했다.
+    ![Alt text](image-20.png)
+    ![Alt text](image-21.png)
+
+
+## 5. 이벤트 종류
+리액트에서 지원하는 대표적인 이벤트
+- Clibboard
+- Touch
+- Composition
+- UI
+- Keyboeard
+- Wheel
+- Focus
+- Media
+- Form
+- Image
+- Mouse
+- Animation
+- Selection
+- Transition
+
+### 1. onChange 이벤트는 value가 변경되면 콜백함수를 호출하는 이벤트해들러이다.
+
+input태그에서 onChange이벤트를 사용하여 값을 관리할 수 있다.
+onChange에서 매개변수로 받은 이벤트를 e로 받아 e.target.value로 value값을 얻어 useState를 통해 상태관리를 할 수 있다.
+![Alt text](image-22.png)
+![Alt text](image-23.png)
+
+- 버튼을 누르면 input value가 초기화 되고 alert하는 것을 구현해보자
+  input tag의 value를 text와 연결한 후 button onClick event 발생 후에 onClick함수 실행하여 setText를 통해 text를 초기화한다.
+![Alt text](image-24.png)
+![Alt text](image-25.png)
+![Alt text](image-26.png)
+
+### 2. 여러개의 input태그 사용하기
+e.target.name으로 property name을 얻어 상태를 관리한다.
+![Alt text](image-28.png)
+![Alt text](image-27.png)
+
