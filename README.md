@@ -415,3 +415,408 @@ e.target.name으로 property name을 얻어 상태를 관리한다.
 ![Alt text](image-28.png)
 ![Alt text](image-27.png)
 
+
+## 5. Ref사용하기
+
+### 일반 html에서는 DOM요소에 이름을 달때 id를 사용한다.
+
+```html
+<div id="my-element"></div>
+```
+
+id를 가진 요소를 css를 통해 디자인하거나 자바스크립트에서 id를 통해 요소를 찾아 작업을 수행할 수 있다.
+
+html에서 DOM에 id를 통해 네이밍을 할 수 있는 것 처럼 리액트 프로젝트 내부에서 DOM에 이름을 다는 방법이 ref개념이다.
+
+### ref는 DOM을 꼭 직접적으로 건드려야 할 때 사용한다.
+클래스형 컴포넌트에서 ref를 사용하는 예시는 작성하지 않겠다. 함수형 컴포넌트에서 ref사용은 후에 나올 때 작성하겠다.
+
+## 6. 컴포넌트 반복
+반복되는 코드를 작성할 때 다음과 같이 그냥 작성할 수 있을 것이다.
+```html
+<ul>
+  <li>수학</li>
+  <li>국어</li>
+  <li>사회</li>
+  <li>과학</li>
+</ul>
+```
+
+일정한 형식에 맞춰 작성되는 반복되는 코드를 map함수를 사용하여 효율적으로 작성할 수 있다.
+
+```javascript
+function App() {
+  const sub = ['수학', '국어', '사회', '과학'];
+
+  return(
+    <div>
+      {sub.map(e => <li>{e}</li>)}
+    </div>
+  )
+}
+```
+
+하지만 다음과 같은 경고 문구가 뜬다.
+
+
+![](image-29.png)
+
+### key란 무엇인가
+가령 생성한 dom각각에서 이벤트가 발생했을 때 변화를 감지하여 변화된 부분만 리렌더링을 할 것이다. 이는 key가 존재한다면 더 빠르게 진행되며 리스트의 각각의 자식 노드들은 key를 가져야 한다.
+
+```javascript
+function App() {
+  const sub = ['수학', '국어', '사회', '과학'];
+
+  return(
+    <div>
+      {sub.map((e, i) => <li key={i}>{e}</li>)}
+    </div>
+  )
+}
+```
+
+key를 index로 지정하는 방식은 쓰이지 않지만 각 요소의 고유번호가 없으므로 인덱스로 지정하였다. 만약 배열의 순서가 바뀌거나 삭제되는 요소가 있다면 효율적으로 렌더링을 할 수 없다.
+
+### 데이터를 추가하거나 삭제하는 기능을 개발해보자
+
+
+#### 데이터 추가하는 기능 구현
+App.js에서 전체 상태를 관리하도록 하였고 names의 getter와 setter를 props로 전달하여 다른 컴포넌트에서 사용하도록 하였다.
+
+```javascript
+App.js
+
+import './App.css';
+import react, { useState } from 'react';
+import MyComponent from './MyComponent';
+import Clist from './Clist';
+import Cinput from './Cinput';
+
+function App() {
+  const [names, setNames] = useState([
+    {id: 1, text: '눈사람'},
+    {id: 2, text: '얼음'},
+    {id: 3, text: '눈'},
+    {id: 4, text: '바람'},
+    ]);
+
+  return(
+    <div>
+      <Clist names={names}></Clist>
+      <Cinput names={names} setNames={setNames}></Cinput>
+
+      <button onClick={() => {
+        console.log(names);
+      }}>현재 객체 출력하기</button>
+    </div>
+  )
+}
+
+export default App;
+```
+Clist는 App.js에서 받은 names를 렌더링하는 컴포넌트이다.
+map함수를 사용하여 효율적으로 렌더링 한다.
+
+```javascript
+Clist.js
+
+import react, { useState } from 'react';
+
+const Clist = (props) => {
+   const {names} = props;
+
+   return(
+      names.map((e) => (
+         <li key={e.id}>{e.text}</li>
+      ))
+   ); 
+};
+
+export default Clist;
+```
+
+Cinput은 App.js에서 받은 setNames를 통해 입력받은 값을 이용하여 names를 수정한다.
+수정된 names는 Clist에서 포착되어 추가된 부분만 재랜더링 된다.
+
+```javascript
+Cinput.js 
+
+import react, { useState } from 'react';
+
+const Cinput = (props) => {
+   const {names, setNames} = props;
+
+   const [inputText, setInputText] = useState('');
+   const [nextId, setNextId] = useState(5);   
+
+   const onChange = (e) => {
+      setInputText(e.target.value);
+   };
+
+   const onClick = () => {
+      const nextNames = [
+         ...names,
+         {id: nextId, text: inputText}
+      ];
+
+      setNames(nextNames);
+
+      setNextId((s) => s + 1);
+      setInputText('');
+   }
+
+   return(
+      <div>
+         <input type="text" value={inputText} onChange={onChange}></input>
+         <button onClick={onClick}>+</button>
+      </div>
+   ); 
+};
+
+export default Cinput;
+```
+위 출력은 가을과 겨울을 순서대로 입력한 것이다.
+
+![Alt text](image-30.png)
+
+객체의 상태는 console로 출력하도록 하여 확인하였다.
+
+![Alt text](image-31.png)
+
+#### 삭제구현하기
+
+map함수를 통해 li요소들을 렌더링 할때 이벤트를 추가하여 더블클릭시 삭제되도록 구현해보겠다.
+따라서 Clist에 props로 setNames를 전달해 주어야 한다.
+![Alt text](image-32.png)
+
+Clist.js
+
+![Alt text](image-33.png)
+
+```javascript
+import react, { useState } from 'react';
+
+const Clist = (props) => {
+   const {names, setNames} = props;
+
+   const onRemove = (id) => {
+      const nextNames = names.filter((e) => {
+         return e.id !== id
+      });
+
+      setNames(nextNames);
+   };
+
+   return(
+      names.map((e) => (
+         <li key={e.id} onDoubleClick={() => {
+            onRemove(e.id);
+         }}>{e.text}</li>
+      ))
+   ); 
+};
+
+export default Clist;
+```
+이는 요소를 삭제한 뒤 객체의 상태를 출력한 것이다.
+
+![Alt text](image-34.png)
+
+
+#### 전체 내용
+
+![Alt text](image-35.png)
+![Alt text](image-36.png)
+![Alt text](image-37.png)
+
+### 7. 컴포넌트의 라이프사이클 메서드
+
+컴포넌트를 처음 렌더링할 때 어떤 작업을 처리해야 하거나 컴포넌트를 업데이트하기 전후로 어떤 작업을 처리해야 할 수도 있고, 또 불필요한 업데이트를 방지해야 할 수도 있다.
+
+컴포넌트의 라이프사이클 메서드는 클래스형 컴포넌트에서만 사용이 가능하다. 함수형 컴포넌트에서는 훅을 이용한다.
+
+### 라이프사이클 메서드는 9종류가 있다.
+라이프 사이클은 세가지 카테고리로 나뉜다.
+
+1. 마운트
+2. 업데이트
+3. 언마운트
+
+### 1. 마운트
+DOM이 생성되고 웹 브라우저상에 나타나는 것을 마운트라고 한다.
+
+#### 컴포넌트가 업데이트되는 네가지 경우
+1. props가 바뀔 때
+2. state가 바뀔 때
+3. 부모 컴포넌트가 리렌더링 될 때 (자식 컴포넌트의 props가 바뀌지 않아도 부모 컴포넌트가 리렌더링 되면 자식 컴포넌트 또한 리렌더링 된다.)
+4. this.forceUpdate로 강제로 렌더링을 트리거할 때
+   
+#### 업데이트할 때 호출하는 메서드
+1. getDerivedStateFromProps: props의 변화에 따라 state값에도 변화를 주고 싶을 때 사용한다.
+2. shouldComponentUpdate: 컴포넌트가 리렌더링을 해야 할지 말아야 할지를 결정하는 메서드이다. true반환시 다음 라이프사이클 메서드를 실행하며 false반환시 작업을 중단한다.
+3. render: 컴포넌트를 리렌더링한다.
+4. getSnapshotBeforeUpdate: 컴포넌트 변화를 DOM에 반영하기 바로 직전에 호출하는 메서드이다.
+5. componentDidUpdate: 컴포넌트의 업데이트 작업이 끝난 후 호출하는 메서드이다.
+   
+### 2. 언마운트
+마운트의 반대과정이다. DOM를 삭제하는 과정이다.
+
+#### 언마운트할 때 호출하는 메서드
+- componentWillUnmount: 컴포넌트가 웹브라우저상에서 사라지기 전에 호출하는 메서드이다.
+
+함수형 컴포넌트에서 라이프사이클 메서드를 훅을 통해 사용하는 예시는 뒤에 나온다.
+
+### 8. Hooks
+
+- useState
+  - useState는 가장 기본적인 Hook이며 가변적인 상태를 지닐 수 있게 해준다.
+
+```javascript
+function App() {
+  const [value, setValue] = useState(0);
+
+  return(
+    <div>
+      <p1>현재 카운터 값은 {value}</p1>
+      <div>
+        <button onClick={() => {
+          setValue(value + 1);
+        }}>+1</button>
+
+        <button onClick={() => {
+          setValue(value - 1);
+        }}>-1</button>
+      </div>
+    </div>
+  )
+}
+```
+
+  - 여러 State사용도 가능하다
+  
+```javascript
+
+import './App.css';
+import react, { useState } from 'react';
+
+function App() {
+  const [name, setName] = useState('');
+  const [age, setAge] = useState('');
+
+  const onChangeName = (e) => {
+    setName(e.target.value);
+  }
+
+  const onChangeAge = (e) => {
+    setAge(e.target.value);
+  }
+
+  return(
+    <div>
+      <div>
+        <input type="text" value={name} onChange={onChangeName}></input>
+        <input type="text" value={age} onChange={onChangeAge}></input>
+      </div>
+
+      <div>
+        <h2>{name}</h2>
+        <h2>{age}</h2>
+      </div>
+    </div>
+  )
+}
+
+export default App;
+
+```
+![Alt text](image-38.png)
+
+- useEffect는 리액트 컴포넌트가 렌더링될 때마다 특정 작업을 수행하도록 설정할 수 있는 Hook이다.
+
+```javascript
+
+import './App.css';
+import react, { useEffect, useState } from 'react';
+
+function App() {
+  const [name, setName] = useState('');
+  const [age, setAge] = useState('');
+
+  const onChangeName = (e) => {
+    setName(e.target.value);
+  }
+
+  const onChangeAge = (e) => {
+    setAge(e.target.value);
+  }
+
+  useEffect(() => {
+    console.log('렌더링이 완료되었습니다.');
+    console.log({
+      name,
+      age
+    })
+  });
+
+  return(
+    <div>
+      <div>
+        <input type="text" value={name} onChange={onChangeName}></input>
+        <input type="text" value={age} onChange={onChangeAge}></input>
+      </div>
+
+      <div>
+        <h2>{name}</h2>
+        <h2>{age}</h2>
+      </div>
+    </div>
+  )
+}
+
+export default App;
+
+```
+
+마운트될 때만 실행하고 싶을 때 두 번째 파라미터로 비어있는 배열을 넣어 주면 된다. (화면에 처음 렌더링 될때만 실행된다.)
+
+```javascript
+useEffect(() => {
+    console.log('마운트될 때만 실행됩니다.');
+  }, []);
+```
+
+특정 값이 업데이트 될때만 실행하고 싶을 때 두 번째 파라미터로 배열에 deps를 넣어준다
+
+```javascript
+useEffect(() => {
+    console.log(name);
+  }, [name]);
+
+  useEffect(() => {
+    console.log(age);
+  }, [age]);
+```
+
+언마운트 될때 실행할 함수(뒷정리함수라고도 함)
+```javascript
+useEffect(() => {
+    console.log(age);
+
+    return () => {
+      console.log('clean up');
+    }
+  }, [age]);
+```
+
+하지만 언마운트 될때 뿐만 아니라 값이 업데이트 될때 업데이트 되기 직전에도 뒷정리함수가 호출된다. 오직 언마운트 될때만 뒷정리 함수가 호출되게 하기 위해선 deps를 빈배열로 전달해주면 된다.
+
+```javascript
+useEffect(() => {
+  console.log(age);
+
+  return () => {
+    console.log('clean up');
+  }
+}, []);
+```

@@ -1,54 +1,59 @@
 
 import './App.css';
-import react, { useState } from 'react';
-import MyComponent from './MyComponent';
-function App() {
-  const [profile, setProfile] = useState(
-    {
-      username: '',
-      age:'',
-    }
-  );
+import react, { useEffect, useState } from 'react';
 
-  const onChangeUserName = (e) => {
-    setProfile({
-      ...profile,
-      [e.target.name] : e.target.value
-    });
-  };
+function App() {
+  const [name, setName] = useState('');
+  const [age, setAge] = useState('');
+
+  const onChangeName = (e) => {
+    setName(e.target.value);
+  }
 
   const onChangeAge = (e) => {
-    setProfile({
-      ...profile,
-      [e.target.name] : e.target.value
-    });
-  };
-
-  const onClick = () => {
-    alert(`username : ${profile.username} 
-    age : ${profile.age}`);
-    setProfile({
-      username: '',
-      age: ''
-    });
+    setAge(e.target.value);
   }
+
+  useEffect(() => {
+    console.log('렌더링이 완료되었습니다.');
+    console.log({
+      name,
+      age
+    })
+
+    return () => {
+      console.log('clean up');
+      console.log(name);
+    }
+  });
+
+  useEffect(() => {
+    console.log('마운트될 때만 실행됩니다.');
+  }, []);
+
+  useEffect(() => {
+    console.log(name);
+  }, [name]);
+
+  useEffect(() => {
+    console.log(age);
+
+    return () => {
+      console.log('clean up');
+    }
+  }, [age]);
 
   return(
     <div>
-      <h2>dddd</h2>
       <div>
-        <input name='username' type='text'
-        onChange={onChangeUserName}
-        value={profile.username}
-        ></input>
-        <input name='age' type='text'
-        onChange={onChangeAge}
-        value={profile.age}
-        ></input>
-      </div> 
+        <input type="text" value={name} onChange={onChangeName}></input>
+        <input type="text" value={age} onChange={onChangeAge}></input>
+      </div>
+
       <div>
-        <button onClick={onClick}>submit</button>
-      </div> 
+        <h2>{name}</h2>
+        <h2>{age}</h2>
+      </div>
     </div>
   )
 }
