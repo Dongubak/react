@@ -1,54 +1,20 @@
 
 import './App.css';
-import react, { useEffect, useState } from 'react';
+import react, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import useInput from './useInput';
 
 function App() {
-  const [name, setName] = useState('');
-  const [age, setAge] = useState('');
-
-  const onChangeName = (e) => {
-    setName(e.target.value);
-  }
-
-  const onChangeAge = (e) => {
-    setAge(e.target.value);
-  }
-
-  useEffect(() => {
-    console.log('렌더링이 완료되었습니다.');
-    console.log({
-      name,
-      age
-    })
-
-    return () => {
-      console.log('clean up');
-      console.log(name);
-    }
+  const [state, onChange] = useInput({
+    name: '',
+    age: '',
   });
 
-  useEffect(() => {
-    console.log('마운트될 때만 실행됩니다.');
-  }, []);
-
-  useEffect(() => {
-    console.log(name);
-  }, [name]);
-
-  useEffect(() => {
-    console.log(age);
-
-    return () => {
-      console.log('clean up');
-    }
-  }, [age]);
+  const {name, age} = state;
 
   return(
     <div>
-      <div>
-        <input type="text" value={name} onChange={onChangeName}></input>
-        <input type="text" value={age} onChange={onChangeAge}></input>
-      </div>
+      <input name='name' value={name} onChange={onChange}></input>
+      <input name='age' value={age} onChange={onChange}></input>
 
       <div>
         <h2>{name}</h2>

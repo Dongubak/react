@@ -820,3 +820,468 @@ useEffect(() => {
   }
 }, []);
 ```
+
+### useReducer로 더 다양한 상황에 따라 다양한 상태를 업데이트하기
+
+리듀서는 현재 상태, 그리고 업데이트를 위해 필요한 정보를 담은 액션값을 전달받아 새로운 상태를 반환하는 함수이다.
+
+#### 리듀서를 이용해서 카운터를 구현해보자
+
+```javascript
+
+import './App.css';
+import react, { useEffect, useReducer, useState } from 'react';
+
+function reducer(state, action) { ///state와 action을 전달 받음
+  ///action은 사용자가 dispatch로 전달함
+  switch(action.type) {
+    case 'INCREMENT':
+      return {
+        value: state.value + 1
+      };
+
+    case 'DECREMENT':
+      return {
+        value: state.value - 1
+      };
+
+    default:
+      return state;
+  }
+}
+
+const Counter = () => {
+  const [state, dispatch] = useReducer(reducer, {
+    value : 0
+  });
+
+  return (
+    <div>
+      <p>current state of value : {state.value}</p>
+
+      <div>
+        <button onClick={() => {
+          dispatch({type : 'INCREMENT'});
+        }}> + </button>
+
+        <button onClick={() => {
+          dispatch({type : 'DECREMENT'});
+        }}> - </button>
+      </div>
+    </div>
+  )
+}
+
+function App() {
+  
+
+
+  return(
+    <div>
+      <Counter></Counter>
+    </div>
+  )
+}
+
+export default App;
+```
+
+reducer라는 함수는 state(현재상태)와 action(사용자의 액션)을 전달 받는다. action은 사용자가 전달한 객체를 의미하며 그 객체에 타입을 넣어줘서 타입에 따른 상태를 업데이트한다. type이 아니여도 된다. 사용자는 dispatch에 객체를 전달해주어 reducer를 작동시킨다. 
+```javascript
+function reducer(state, action) { 
+  switch(action.type) {
+    case 'INCREMENT':
+      return {
+        value: state.value + 1
+      };
+
+    case 'DECREMENT':
+      return {
+        value: state.value - 1
+      };
+
+    default:
+      return state;
+  }
+}
+```
+
+useReducer에는 custom reducer함수를 전달해주며 두번째 전달인자로 초기 객체정보를 전달해준다.
+```javascript
+const [state, dispatch] = useReducer(reducer, {
+    value : 0
+  });
+```
+
+### useReducer의 장점
+컴포넌트업데이트 로직을 컴포넌트 바깥으로 빼낼 수 있다.
+
+
+### react input tag 출력해보기
+```javascript
+
+import './App.css';
+import react, { useEffect, useReducer, useState } from 'react';
+import CustomInput from './CustomInput';
+
+
+function App() {
+
+  const onChange = (e) => {
+    console.log(Object.getOwnPropertyDescriptors(e.target));
+  }
+
+  return(
+    <div>
+      <input name='test' onChange={onChange}></input>
+      {/* <CustomInput></CustomInput> */}
+    </div>
+  )
+}
+
+export default App;
+```
+
+![Alt text](image-39.png)
+
+value필드는 input의 프로퍼티에 있지만 name은 보이지 않는다.
+
+#### name필드가 없는 것에 대한 gpt의 해답
+React에서 이벤트 핸들러에 전달되는 SyntheticEvent 객체는 원래의 DOM 이벤트를 감싼 객체로, 일부 DOM 이벤트의 속성을 포함하고 있습니다. 그러나 이 객체에는 name 속성이 직접적으로 존재하지 않습니다. 대신, React에서는 name 속성이 아니라 event.target.name의 형태로 사용되는 것이 일반적입니다.
+
+### reducer를 이용하여 input상태 관리하기
+```javascript
+import { useReducer, useState } from "react";
+
+function reducer(state, action) {
+   return {
+      ...state,
+      [action.name] : action.value
+   };
+} ///action에 name과 value를 받으며 state내부에 name프로퍼티 해당하는 value를 업데이트한다
+
+const CustomInput = () => {
+
+  const [state, dispatch] = useReducer(reducer, {
+    name : '',
+    age: ''
+  });
+
+  const {name, age} = state; ///destructuring
+  
+  const onChange = (e) => {
+    dispatch(e.target);
+    ///input tag에서의 e.target은 input tag를 가리키며 이는 name field와 age field를 갖고있음
+  }
+      
+  return (
+      <div>
+        <div>
+            <input name="name" value={name} onChange={onChange}></input>
+            <input name="age" value={age} onChange={onChange}></input>
+        </div>
+
+        <div>
+            <h2>이름 : {name}</h2>
+            <h2>나이 : {age}</h2>
+        </div>
+      </div>
+  )
+}
+
+export default CustomInput;
+```
+
+#### 리듀서 함수 작성하기
+action은 input자체를 전달 할 것이고 그 객체안에 name field와 value field를 이용하여 state를 업데이트 할 것이다.
+
+```javascript
+function reducer(state, action) {
+   return {
+      ...state,
+      [action.name] : action.value
+   };
+}
+```
+
+#### 초기상태 작성
+```javascript
+const [state, dispatch] = useReducer(reducer, {
+      name : '',
+      age: ''
+   });
+```
+
+#### onChange 함수 작성 및 리턴 작성
+
+onChange함수에서는 e.target자체를 dispatch로 전달해준다.
+
+```javascript
+const onChange = (e) => {
+      dispatch(e.target);
+      ///input tag에서의 e.target은 input tag를 가리키며 이는 name field와 age field를 갖고있음
+   }
+   
+   return (
+      <div>
+         <div>
+            <input name="name" value={name} onChange={onChange}></input>
+            <input name="age" value={age} onChange={onChange}></input>
+         </div>
+
+         <div>
+            <h2>이름 : {name}</h2>
+            <h2>나이 : {age}</h2>
+         </div>
+      </div>
+   )
+```
+
+### 전체적인 과정 정리
+
+1. 사용자가 이벤트를 발생시킬 때 dispatch를 통해 action을 전달함
+2. reducer에서 action과 현재 상태인 state를 통해서 state를 업데이트함
+
+사용자는 리듀서 함수를 작성하여 useReducer에 전달해줘야 하면 두번째 전달인자로 초기상태를 전달해준다. 이때 받은 state와 dispatch를 통해 reducer함수 작성 및 이벤트 핸들러 작성을 해야한다.
+
+![Alt text](image.gif)
+출처: https://velog.io/@line_jeong32/React-상태-관리
+
+
+### useMemo를 통한 최적화 진행하기
+
+간단한 평균계산기를 만들어보자
+```javascript
+
+import './App.css';
+import react, { useEffect, useReducer, useState } from 'react';
+
+const getAverage = (numbers) => {
+  console.log('평균값 계산 중..');
+  if(numbers.length === 0) {
+    return 0;
+  }
+  const sum = numbers.reduce((a, b) => a + b);
+  return sum / numbers.length;
+};
+
+const Average = () => {
+  const [list, setList] = useState([]);
+  const [number, setNumber] = useState('');
+
+  const onChange = (e) => {
+    setNumber(e.target.value);
+  };
+
+  const onInsert = (e) => {
+    const nextList = [
+      ...list, parseInt(number)
+    ];
+    setList(nextList);
+    setNumber('');
+  }
+
+  return (
+    <div>
+      <div>avg : {getAverage(list)}</div>
+      <input value={number} onChange={onChange}></input>
+
+      <button onClick={onInsert}>add</button>
+    </div>
+  )
+}
+
+function App() {
+
+  return(
+    <div>
+      <Average></Average>
+    </div>
+  )
+}
+
+export default App;
+```
+
+![Alt text](image-40.png)
+
+getAverage함수가 호출 될 때 마다 평균값 계산중이라는 문자열을 출력하게 했다
+출력 결과를 보면 list가 수정 될때 뿐만 아니라 input이 수정될때도 getAverage함수가 호출 되는 것을 확인 할 수 있다. useMemo를 사용하면 렌더링 하는 과정에서 특정값이 바뀌었을 때만 연산을 실행하게 할 수 있다. 여기 예시에서는 list가 바뀌었을 때만 연산을 진행하게 할 수 있다.
+
+```javascript
+  const avg = useMemo(() => {
+    return getAverage(list)
+  }, [list]);
+
+```
+
+![Alt text](image-41.png)
+
+#### useCallback함수를 이용한 최적화
+
+컴포넌트가 렌더링될 때 함수들도 재생성된다. onChange함수같은 경우에는 렌더링 될때마다 새로운 함수를 사용할 필요가 없다. 따라서 useCallback함수의 두번째 전달인자로 빈 배열을 전달하여 처음 렌더링 될때만 생성하고 그 이후에 새로운 함수를 생성하지 않게 할 수 있다.
+
+```javascript
+const onChange = useCallback((e) => {
+    setNumber(e.target.value);
+  }, []);
+```
+
+마찬가지로 onInsert함수는 list와 number를 사용하며 list와 number가 바뀌지 않는다면 새로운 함수를 생성할 필요가 없으므로 최적화를 진행한다 이때 deps에는 list와 number를 전달해준다.
+
+```javascript
+const onInsert = useCallback(() => {
+    const nextList = [
+      ...list, parseInt(number)
+    ];
+    setList(nextList);
+    setNumber('');
+  }, [list, number]);
+```
+
+주의할 점은 useCallback함수의 두번째 전달인자로 어떤 값이 바뀌었을 때 함수를 새로 생성해야 하는지 명시해야 한다.
+
+### useRef를 통해서 포커스 이동하기
+
+#### useRef의 명세
+
+useRef returns a mutable ref object whose .current property is initialized to the passed argument (initialValue). The returned object will persist for the full lifetime of the component.
+
+#### 사용명세
+![Alt text](image-42.png)
+
+#### useRef 사용명세 정리
+
+1. ref를 통해 DOM을 다룰 때 초기 값을 null로 하여 inputRef객체를 생성한다.
+2. DOM element의 ref attribute에 inputRef객체를 전달한다.
+3. inputRef.current를 통해서 element에 접근한다.
+
+```javascript
+const inputEl = useRef(null);
+
+...
+
+const onInsert = useCallback(() => {
+    const nextList = [
+      ...list, parseInt(number)
+    ];
+    setList(nextList);
+    setNumber('');
+    inputEl.current.focus();
+  }, [list, number]);
+```
+
+#### useRef를 사용하여 로컬 변수 사용하기
+useRef를 통해서 로컬변수를 변경할 수 있다. 이때 변경되어도 컴포넌트가 리렌더링 되지 않는 것을 유의해야 한다. 즉 렌더링과 관련없는 변수를 관리할 때 사용할 수 있다.
+
+```javascript
+
+import './App.css';
+import react, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+
+const RefSample = () => {
+  const id = useRef(1);
+  const setId = (n) => {
+    id.current = n;
+  }
+
+  const printId = () => {
+    console.log(id.current);
+  }
+
+  const [value, setValue] = useState('');
+
+  const onChange = useCallback((e) => {
+    setValue(e.target.value);
+  }, []);
+  
+  const onClick = () => {
+    setId(value);
+  }
+
+  return (
+    <div>
+      {id.current}
+      
+      <input onChange={onChange}></input>
+      <button onClick={onClick}>edit</button>
+      <button onClick={() => {
+        console.log(id.current);
+      }}>print id</button>
+    </div>
+  )
+}
+
+function App() {
+  
+  return(
+    <div>
+      <RefSample></RefSample>
+    </div>
+  )
+}
+
+export default App;
+```
+![](image-43.png)
+
+위 출력을 보면 12로 수정해도 리렌더링을 하지 않는 것을 확인할 수 있다. 또한 출력하는 버튼을 눌렀을 때 수정된 id.current값을 얻을 수 있는 것도 확인할 수 있다. 따라서 리렌더링할 필요없는 로컬변수를 다룰 때 useRef를사용할 수 있다.
+
+### custom Hook으로 input상태 관리하기
+
+```javascript
+import React, { useReducer } from "react";
+
+function reducer(state, action) {
+   return {
+      ...state,
+      [action.name] : action.value
+   };
+}
+
+export default function useInput(initialForm) {
+   const [state, dispatch] = useReducer(reducer, initialForm);
+
+   const onChange = e => {
+      dispatch(e.target);
+   };
+
+   return [state, onChange];
+}
+```
+
+useInput함수는 전달받은 초기객체와 리듀서 함수를 통해서 state와 dispatch를 생성하고 onChange함수에서 dispatch를 통해서 이벤트 정보를 전달한다. App에서 사용하는 useInput함수는 현재상태와 이벤트시 호출할 콜백함수만 받으면 되므로 custom hook을 만들어 필요한 상태와 콜백함수만 사용할 수 있도록 하며 컴포넌트 바깥에서 상태를 관리하는 로직을 구현할 수 있다.
+
+```javascript
+
+import './App.css';
+import react, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import useInput from './useInput';
+
+function App() {
+  const [state, onChange] = useInput({
+    name: '',
+    age: '',
+  });
+
+  const {name, age} = state;
+
+  return(
+    <div>
+      <input name='name' value={name} onChange={onChange}></input>
+      <input name='age' value={age} onChange={onChange}></input>
+
+      <div>
+        <h2>{name}</h2>
+        <h2>{age}</h2>
+      </div>
+    </div>
+  )
+}
+
+export default App;
+```
+
+App에서는 state와 onChange만을 사용하여 상태관리를 할 수 있다.
+
+![Alt text](image-44.png)
