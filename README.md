@@ -1285,3 +1285,302 @@ export default App;
 App에서는 state와 onChange만을 사용하여 상태관리를 할 수 있다.
 
 ![Alt text](image-44.png)
+
+### custom hook을 이용하여 counter구현하기
+
+마찬가지로 useCounter는 상태와 콜백함수만 반환하여 App에서 state와 onClick만 받아 사용하게 했다.
+
+```javascript
+import React, { useReducer } from "react";
+
+function reducer(state, action) {
+   if(action.name === 'INCREMENT') {
+      return {
+         ...state,
+         count: state.count + 1
+      };
+   } else if(action.name === 'DECREMENT') {
+      return {
+         ...state,
+         count: state.count - 1
+      };
+   }
+}
+
+export default function useCounter(initialForm) {
+   const [state, dispatch] = useReducer(reducer, initialForm);
+
+   const onClick = (e) => {
+      dispatch(e.target);
+   }
+
+   return [state, onClick];
+}
+```
+
+```javascript
+
+import './App.css';
+import react, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import useInput from './useInput';
+import useCounter from './useCounter';
+
+function App() {
+  const [state, onClick] = useCounter({
+    count : 0
+  });
+
+
+  return(
+    <div>
+      <h2>{state.count}</h2>
+      <button name='INCREMENT' onClick={onClick}>+</button>
+      <button name='DECREMENT' onClick={onClick}>-</button>
+    </div>
+  )
+}
+
+export default App;
+
+```
+
+![Alt text](image-45.png)
+
+상태관리 코드를 분리하여 컴포넌트구현에 집중할 수 있을 듯 하다
+
+### 9. component styling
+리액트에서 컴포넌트를 스타일링 하는 방식은 크게 4가지로 볼 수 있다.
+
+1. general CSS
+2. Sass
+3. CSS module
+4. styled-component
+
+general CSS는 기본적인 방식이므로 생략하며 Sass는 충돌이 잦아 생략한다.
+
+### styled-component
+
+스타일드컴포넌트는 자바스크립트 파일안에서 스타일을 선언하는 방식이다.
+
+
+설치
+```
+npm install styled-components
+```
+
+```javascript
+
+import './App.css';
+import react, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import useInput from './useInput';
+import useCounter from './useCounter';
+import styled, { css } from 'styled-components';
+
+const Box = styled.div`
+  background: ${props => props.color || 'blue'};
+  padding: 1rem;
+  display: flex;
+`;
+
+const Button = styled.button`
+  background: white;
+  color: black;
+  border-radius: 4px;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;;
+  justify-content: center;;
+  box-sizing: border-box;
+  font-size: 1rem;
+  font-weight: 600;
+
+  &:hover { /// &문자를 사용하여 자기 자신 선택
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  ${
+    props => props.inverted && css`
+      background: none;
+      border: 2px solid white;
+      color: white;
+
+      &:hover {
+        background: white;
+        color: black;
+      }
+    `
+  };
+
+  & + button {
+    margin-left: 1rem;
+  }
+`;
+
+
+function App() {
+  
+
+  return(
+    <div>
+      <Box color='black'>
+        <Button>Hi</Button>
+        <Button inverted={true}>outline</Button>
+      </Box>
+    </div>
+  )
+}
+
+export default App;
+
+```
+![](image-46.png)
+
+styled-component에서는 props로 전달한 값들을 디자인할 때 사용할 수 있다는 것이다.
+
+```javascript
+const Box = styled.div`
+  background: ${props => props.color || 'blue'};
+  padding: 1rem;
+  display: flex;
+`;
+...
+<Box color='black'>
+        <Button>Hi</Button>
+        <Button inverted={true}>outline</Button>
+      </Box>
+```
+
+**Box컴포넌트를 사용할 때 props로 받은 color값을 이용하여 background값을 지정할 수 있다.**
+
+```javascript
+&:hover { /// &문자를 사용하여 자기 자신 선택
+    background: rgba(255, 255, 255, 0.9);
+  }
+```
+
+버튼컴포넌트를 보면 자기자신을 선택할 수 있는 &를 이용하여 hover시에 background를 변경한다.
+
+```javascript
+${
+    props => props.inverted && css`
+      background: none;
+      border: 2px solid white;
+      color: white;
+
+      &:hover {
+        background: white;
+        color: black;
+      }
+    `
+  };
+```
+
+또한 props로 전달받은 inverted값이 true인경우에 대해서 다른 스타일을 적용한다. 이때 css``를 통해서 새로운 스타일들을 적용한다. 이는 tagged template literal이며, 이를 사용하지 않으면 그냥 문자열로 인식한다.
+
+사용해야할 태그명이 유동적이거나 특정 컴포넌트 자체에 스타일링해 주고 싶다면 styled(component)형태로 구현이 가능하다
+
+```javascript
+
+import './App.css';
+import react, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import useInput from './useInput';
+import useCounter from './useCounter';
+import styled, { css } from 'styled-components';
+
+const Box = styled.div`
+  background: ${props => props.color || 'blue'};
+  padding: 1rem;
+  display: flex;
+`;
+
+const Button = styled.button`
+  background: white;
+  color: black;
+  border-radius: 4px;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;;
+  justify-content: center;;
+  box-sizing: border-box;
+  font-size: 1rem;
+  font-weight: 600;
+
+  &:hover { /// &문자를 사용하여 자기 자신 선택
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  ${
+    props => props.inverted && css`
+      background: none;
+      border: 2px solid white;
+      color: white;
+
+      &:hover {
+        background: white;
+        color: black;
+      }
+    `
+  };
+
+  & + button {
+    margin-left: 1rem;
+  }
+`;
+
+const CustomComponent = ({className}) => {
+  return(
+    <h2 className={className}>hello</h2>
+  );
+};
+
+const StyledCustomComponent = styled(CustomComponent)`
+  font-size: 2rem;
+`
+
+function App() {
+  
+
+  return(
+    <div>
+      {/* <Box color='black'>
+        <Button>Hi</Button>
+        <Button inverted={true}>outline</Button>
+      </Box> */}
+
+      <StyledCustomComponent></StyledCustomComponent>
+    </div>
+  )
+}
+
+export default App;
+```
+
+위 예시에서 className을 받아서 전달해주기만 하면 styled에 다양한 컴포넌트를 전달할 수 있다.
+
+### 반응형 디자인
+브라우저의 가로 크기에 따라서 다른 스타일을 적용하기 위해서 media쿼리를 사용한다.
+
+```javascript
+const Box = styled.div`
+  background: ${props => props.color || 'blue'};
+  padding: 1rem;
+  display: flex;
+
+  width: 1024px;
+  margin: 0 auto;
+  @media (max-width: 1024px) {
+    width: 768px;
+  }
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+`;
+```
+
+1024이상
+![Alt text](image-47.png)
+
+768미만
+![Alt text](image-48.png)
+
