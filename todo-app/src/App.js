@@ -1,24 +1,76 @@
-import logo from './logo.svg';
+import { useCallback, useReducer, useRef, useState } from 'react';
 import './App.css';
+import TodoInsert from './components/TodoInsert';
+import TodoList from './components/TodoList';
+import TodoTemplate from './components/TodoTemplate';
+
+
+function todoReducer(todos, action) {
+  switch(action.type) {
+    case 'INSERT':
+      return todos.concat(action.todo);
+
+    case 'REMOVE':
+      return todos.filter((todo) => (
+        todo.id !== action.id
+      ));
+
+    case 'TOGGLE':
+      return todos.map((todo) => (
+        todo.id === action.id ? {
+          ...todo,
+          checked: !todo.checked
+        } : todo
+      ));
+    defualt:
+      return todos;
+  }
+
+}
 
 function App() {
+  const [todos, dispatch] = useReducer(todoReducer, [{
+    id: 1,
+    text: 'HI',
+    checked: false
+  }]);
+
+  const nextId = useRef(2);
+
+  const onInsert = useCallback((text) => {
+    const newTodo = {
+      id: nextId.current,
+      text: text,
+      checked: false,
+    };
+
+    dispatch({
+      type: 'INSERT',
+      newTodo
+    });
+
+    nextId.current += 1;
+  }, [todos]);
+
+  const onRemove = useCallback((id) => {
+    dispatch({
+      type: 'REMOVE',
+      id: id
+    });
+  }, []);
+
+  const onToggle = useCallback((id) => {
+    dispatch({
+      type: 'TOGGLE',
+      id: id
+    })
+  }, [todos]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <TodoTemplate>
+      <TodoInsert onInsert={onInsert}></TodoInsert>
+      <TodoList todos={todos} onRemove={onRemove} onToggle={onToggle}></TodoList>
+    </TodoTemplate>
   );
 }
 

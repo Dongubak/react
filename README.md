@@ -1584,3 +1584,1101 @@ const Box = styled.div`
 768미만
 ![Alt text](image-48.png)
 
+### 13. react router
+
+라우팅이란 웹애플리케이션에서 라우팅이라는 개념은 사용자가 요청한 URL에 따라 알맞은 페이지를 보여주는 것을 의미한다.
+
+웹애플리케이션을 만들 때 하나의 페이 혹은 여러 페이지로 구성할 수 있다.
+
+즉 여러 페이지로 구성된 웹 애플리케이션을 만들 때 페이지 별로 켐포넌트들을 분리해가면서 프로젝트를 관리하기 위해 필요한 것이 라우팅 시스템이다.
+
+react router : 컴포넌트 기반으로 라우팅 시스템을 설정할 수 있으며 리액트 관련 라이브러리 중에서 가장 오래됨
+Next.js : 리액트 라우터의 대안으로 많이 사용되고 있으며 파일 경로 기반으로 작동한다.
+
+
+
+#### SPA(single page application)이란
+SPA란 하나의 페이지로 이루어진 애플리케이션이라는 의미이다.
+
+![Alt text](image-49.png)
+
+싱글페이지 애플리케이션 이전에는 멀티페이지 애플리케이션이 있었다. 이는 사용자가 다른 페이지로 이동할 때마다 새로운 html을 서버로부터 받아오며 CSS, JS등 리소스를 전달받아 화면에 보여줬다. 사용자와 인터렉션이 많이 없는 경우에 적합한 방법이지만 새로운 페이지를 보여줄 때마다 서버에서 받아와야 하므로 서버자원을 많이 사용하며 트래픽도 많이 나온다고 한다.
+
+이에반해 싱글페이지 애플리케이션은 시작할 때 한번 html을 서버에서 받고 이후에 화면을 업데이트할 때엔 서버에서 필요한 데이터만 받아서 렌더링한다.
+
+#### 기본적인 라우팅 구현해보기
+```javascript
+npm install react-router-dom
+```
+
+react-router-dom을 설치한 후 home component를 생성해보자
+
+```javascript
+import React from "react";
+import { Link } from "react-router-dom";
+
+const Home = () => {
+   return (
+      <div>
+         <h1>
+            홈
+         </h1>
+
+         <p>가장 먼저 보여지는 페이지</p>
+         <Link to="/about">소개</Link>
+      </div>
+   )
+}
+
+export default Home;
+```
+
+이 컴포넌트는 처음에 보여지는 페이지이며 App.js에서 Routes안에 Route의 / 즉 index경로에 보여지는 컴포넌트이다.
+
+```javascript
+import React from "react";
+import { Route, Routes } from "react-router-dom";
+import Home from "./pages/Home";
+import About from "./pages/About";
+
+const App = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<Home></Home>}></Route>
+    </Routes>
+  )
+}
+
+export default App;
+```
+
+이제 index.js에서 라우터를 적용해주어야 하는데 BrowserRouter에 App을 감싸주면 된다.
+
+```javascript
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+import { BrowserRouter } from 'react-router-dom';
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+```
+
+![Alt text](image-50.png)
+
+
+이제 /about으로 이동시에 라우팅할 컴포넌트를 만든다.
+
+```javascript
+import React from "react";
+
+const About = () => {
+
+   return (
+      <div>
+         <h2>소개</h2>
+         <p>리액트 라우터를 사용해 보는 프로젝트입니다.</p>
+      </div>
+   )
+}
+
+export default About;
+```
+
+App.js에서 라우팅 경로를 추가해주면 주소창에 /about을 치면 About 컴포넌트로 이동한다.
+```javascript
+<Routes>
+  <Route path="/" element={<Home></Home>}></Route>
+  <Route path="/about" element={<About></About>}></Route>
+</Routes>
+```
+
+![Alt text](image-51.png)
+
+
+#### 라우트(<Route>) 컴포넌트 사용법
+```javascript
+<Route path='주소' element={<CustomComponent>} />
+```
+
+#### 링크(<Link>) 컴포넌트 사용법
+보통 다른 페이지로 이동할 경우 a태그를 사용하지만 브라우저에서 a태그를 누르면 새로운 페이지를 불러와 싱글페이지 애플리케이션을 만들 수 없다. 그래서 Link컴포넌트를 사용하여 라우팅을 한다.
+
+```javascript
+<Link to='경로'>링크 이름</Link>
+```
+
+위에서 about페이지로 이동할 때 사용한 예시는 다음과 같다.
+```javascript
+<Link to="/about">소개</Link>
+```
+
+#### URL 파라미터와 쿼리스트링
+
+URL파라미터의 예시 : /profile/velopert
+쿼리스트링의 예시 : /articles?page=1&keyword=react
+
+파라미터는 경로에 유동적인 값을 넣는 형태이며 쿼리스트링은 ?이후에 키워드를 전달할 때 사용한다.
+
+
+
+#### URL파라미터 사용하기
+
+URL이 /profiles/사용자이름 일때
+사용자이름을 username으로 받아서 해당하는 값들을 렌더링한다.
+
+<Route path="/profiles/:username" component={<Profile></Profile>}></Route>
+
+/profiles/:username은 URL 파라미터를 받는다는 것이며 뒤에 붙는 문자열을 username으로 받는 다는 것이다. Profile컴포넌트에서 useParams를 통해 파라미터 정보를 얻고 username프로퍼티 값으로 뒤에 문자열을 얻는다 다음은 예시이다.
+
+App.js
+
+```javascript
+import React from "react";
+import { Route, Routes } from "react-router-dom";
+import Home from "./pages/Home";
+import About from "./pages/About";
+import Profile from "./pages/Profile";
+
+const App = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<Home></Home>}></Route>
+      <Route path="/about" element={<About></About>}></Route>
+      <Route path="/profiles/:username" element={<Profile></Profile>} />
+    </Routes>
+  )
+}
+
+export default App;
+```
+
+Profile.js
+
+```javascript
+import React from "react";
+import { useParams } from 'react-router-dom';
+
+
+const data = {
+   velopert: {
+      name: '김민준',
+      description: '리액트를 좋아하는 개발자',
+   },
+   gildong : {
+      name: '홍길동',
+      description: '고전 소설 홍길동전의 주인공',
+   },
+};
+
+const Profile = () => {
+   const params = useParams();
+   const profile = data[params.username];
+
+   return (
+      <div>
+         <h1>사용자 프로필</h1>
+         {
+            profile ? (
+               <div>
+                  <h2>{profile.name}</h2>
+                  <p>{profile.description}</p>
+               </div>
+            ) : (<p>
+               존재하지 않는 프로필입니다.
+            </p>)
+         }
+      </div>
+   )
+};
+
+export default Profile;
+```
+
+다음과 같은 과정으로 URL 파라미터를 얻었다.
+
+```javascript
+const params = useParams();
+const profile = data[params.username];
+```
+
+![Alt text](image-52.png)
+
+#### 쿼리스트링 사용하기
+
+쿼리스트링은 useSearchParams를 통해 사용할 수 있다. getter와 setter가 있다.
+
+```javascript
+const [searchParams, setSearchParams] = useSearchParams();
+```
+
+쿼리 값을 get함수를 통해 얻을 수 있다.
+
+```javascript
+const [searchParams, setSearchParams] = useSearchParams();
+const detail = searchParams.get('detail');
+```
+
+또한 이벤트 발생시에 쿼리값을 수정할 수도 있다.
+
+```javascript
+const onToggleDetail = () => {
+  setSearchParams({
+    detail: detail === 'true' ? false : true
+  })
+}
+```
+
+![Alt text](image-53.png)
+
+
+#### 중첩된 라우트
+
+/articles/1, articles/2 등등 여러 게시물을 들어갈 수 있어야한다.
+
+```javascript
+<Route path="/articles/:id" element={<Articles />} />
+```
+또는
+
+```javascript
+<Route path="/articles" element={<Articles />}>
+  <Route path=":id" element={<Article />} />
+</Route>
+```
+이렇게 가능하다 하지만 중첩된 라우팅의 경우 Outlet컴포넌트를 통해서 Article 컴포넌트를 Articles컴포넌트에서 조회가 가능하다. 따라서 Articles 컴포넌트에는 <Outlet>컴포넌트를 사용해야 한다.
+
+한편 게시글로 이동하는 Link는 다음과 같을 것이다.
+
+```javascript
+<Link to="/articles/1" element={<Article />} />
+```
+
+Article component에서는 useParams를 통해서 1이라는 값을 얻을 수 있을 것이다.
+
+따라서 코드들은 다음과 같다.
+
+```javascript
+App.js
+
+import React from "react";
+import { Route, Routes } from "react-router-dom";
+import Home from "./pages/Home";
+import About from "./pages/About";
+import Profile from "./pages/Profile";
+import Articles from "./pages/Articles";
+import Article from "./pages/Article";
+
+const App = () => {
+  return (
+    <Routes>
+      <Route path="/" element={<Home></Home>}></Route>
+      <Route path="/about" element={<About></About>}></Route>
+      <Route path="/profiles/:username" element={<Profile></Profile>} />
+      <Route path="/articles" element={<Articles></Articles>}>
+        <Route path=":id" element={<Article></Article>}></Route>
+      </Route>
+    </Routes>
+  )
+}
+
+export default App;
+
+Articles.js
+import React from "react";
+import { Link, Outlet } from "react-router-dom";
+
+const Articles = () => {
+   return(
+      <div>
+         <Outlet></Outlet>
+         <ul>
+            <li>
+               <Link to="/articles/1">게시글 1</Link>
+            </li>
+            <li>
+               <Link to="/articles/2">게시글 2</Link>
+            </li>
+            <li>
+               <Link to="/articles/3">게시글 3</Link>
+            </li>
+         </ul>   
+      </div>
+   )
+}
+
+export default Articles;
+
+Article.js
+import React from "react";
+import { useParams } from "react-router-dom";
+
+const Article = () => {
+   const {id} = useParams();
+
+   return(
+      <div>
+         <h2>게시글 {id}</h2>
+      </div>
+   )
+}
+
+export default Article;
+```
+
+Article 컴포넌트에서 id를 useParams를 통해서 조회한 것을 확인할 수 있으며 Articles컴포넌트에서는 중첩된 라우트를 보여주는 컴포넌트인 <Outlet> 컴포넌트를 사용하였다.
+
+즉 정리하면 다음과 같다.
+
+1. 중첩된 라우트 사용이 가능하다
+2. 중첩된 라우트의 파라미터값을 조회할 수 있다.
+3. 중첩된 라우트에서 부모라우트의 컴포넌트에서 자식 라우트 컴포넌트를 <Outlet />을 통해 렌더링할 수 있다.(자식꺼 보여주는 게 Outlet)
+
+#### 공통 레이아웃 컴포넌트
+
+가령 header를 어떤 컴포넌트들 위에 존재하도록 하고 싶을 때
+Layout이라는 컴포넌트를 공통레이아웃 컴포넌트로 하여 보여줄 컴포넌트들의 부모 라우터로 한다.
+
+```javascript
+<Route element={<Layout></Layout>}>
+  <Route path="/" element={<Home></Home>}></Route>
+  <Route path="/about" element={<About></About>}></Route>
+  <Route path="/profiles/:username" element={<Profile></Profile>} />
+</Route>
+```
+
+Layout컴포넌트는 3개의 자식 라우트들을 <Outlet />으로 받을 수 있다.
+<Outlet />은 또한 Layout에서 사용한다.
+
+
+#### index props 및 리액트 라우터 부가기능
+
+header를 위에 보여주는 path="/"에서 <Outlet>에 기본적으로 보여줄 컴포넌트를 index 를 전달하여 설정할 수 있다.
+
+#### useNavigate
+useNavigate는 Link컴포넌트를 사용하지 않고 다른페이지를 이동해야할 때 사용하는 훅이다.
+
+```javascript
+const goBack = () => {
+  navigate(-1);
+}
+
+const goArtices = () => {
+  navigate('/articles', {
+    replace: true
+  });
+}
+```
+
+replace옵션을 true로 하면 navigation stack에 쌓이지 않는다.
+
+NavLink를 통해서 active될때 isActive값을 받아서 스타일을 적용할 수도 있다.
+
+```javascript
+<ul>
+  <li>
+      <NavLink to="/articles/1" style={({isActive}) => (
+        isActive ? activeStyle : undefined
+      )}>게시글 1</NavLink>
+  </li>
+  <li>
+      <NavLink to="/articles/2" style={({isActive}) => (
+        isActive ? activeStyle : undefined
+      )}>게시글 2</NavLink>
+  </li>
+  <li>
+      <NavLink to="/articles/3" style={({isActive}) => (
+        isActive ? activeStyle : undefined
+      )}>게시글 3</NavLink>
+  </li>
+</ul>  
+```
+
+*(wildcard)를 통해서 정의한 라우트 링크가 아닌 다른 링크들에 대해서 NotFound페이지를 보여줄 수 있다.
+
+```javascript
+<Route path="*" element={<NotFound></NotFound>}></Route>
+```
+
+Navigate컴포넌트는 컴포넌트를 보여주는 순간 다른 페이지로 이동을 하고 싶을 때 사용하는 컴포넌트이다. 로그인을 해야 볼 수 있는 마이페이지를 로그인을 하지 않고 들어간다면 로그인 페이지로 이동해야할 것이다.
+
+```javascript
+<Route path="/login" element={<Login></Login>}></Route>
+<Route path="/mypage" element={<MyPage></MyPage>}></Route>
+```
+
+마이페이지
+
+```javascript
+import React from "react";
+import { Navigate } from "react-router-dom";
+
+const MyPage = () => {
+   const isLoggedIn = true;
+
+   if(!isLoggedIn) {
+      return <Navigate to="/login" replace={true} />
+   }
+
+   return(
+      <div>
+         mypage
+      </div>
+   )
+}
+
+export default MyPage;
+```
+
+이처럼 마이페이지에서는 로그인이 되어있지 않은 경우에 로그인 페이지로 리 디렉션한다.또한 replace옵션을 통해서 stack에 쌓지 않을 수도 있다.
+
+
+
+### 16. redux
+
+1. action
+2. action creator
+3. reducer
+4. store
+5. dispatch
+6. subscribe
+
+#### action
+reducer는 action과 현재 상태 state를 전달받아 store의 상태를 변경한다.
+
+```javascript
+const TOGGLE_SWTICH = 'TOGGLE_SWITCH';
+const INCREASE = 'INCREASE';
+const DECREASE = 'DECREASE';
+```
+
+#### action creator
+액션발생함수는 action을 반환하는 함수이다. type필드는 필수이며 때에 따라 다른 값들을 전달할 수 있다.
+```javascript
+const increase = (difference) => ({
+      type: INCREASE,
+      difference
+});
+```
+
+#### reducer
+action과 state를 통하여 상태를 변경한다.
+```javascript
+function reducer(state = initialState, action) {
+   switch(action.type) {
+      case INCREASE:
+         return({
+            ...state,
+            counter: state.counter + 1,
+         })
+      case DECREASE:
+         return({
+            ...state,
+            counter : state.counter - 1,
+         })
+
+      case TOGGLE_SWTICH:
+         return({
+            ...state,
+            toggle: !state.toggle
+         });
+
+      default:
+         return state;
+   }
+}
+```
+
+#### store
+프로젝트에 리덕스를 적용하기 위해 사용한다. store를 생성할 때 리듀서함수를 등록하며 리듀서함수가 반환하는 상태로 store가 상태 변경하는 것으로 보인다.
+```javascript
+const store = createStore(reducer);
+```
+
+#### dispatch
+액션을 발생시키는 것이라고 이해하면 된다. dispatch함수에 액션객체를 전달하면 리듀서로 전달되어 리듀서에서 현재 상태와 액션을 반영하여 상태를 변경한다.
+
+```javascript
+divToggle.onClick = () => {
+   store.dispatch(toggleSwitch());
+}
+```
+
+#### subscribe
+액션이 발생하고 리듀서함수를 통해 상태가 변경될 때 변경됨을 감지하여 리스너 함수를 등록할 수 있도록 한다. 즉 상태가 변경될 때 마다 등록된 콜백함수를 실행하는 것이다.
+
+```javascript
+const unsubscribe = store.subscribe(listener);
+unsubscribe();
+```
+
+
+#### 리덕스를 이용하여 카운터 구현하기
+
+프로젝트 구성시 액션타입, 액션생성함수, 리듀서를 작성한 코드를 modules디렉토리에 위치한다.
+
+components디렉토리에는 단순히 props를 받아서 렌더링하는 컴포넌트들을 위치시키며, 리덕스 스토에 접근하여 원하는 상태를 받아오거나 액션을 디스패치는 컴포넌트는 container디렉토리에 위치시킨다.
+
+카운터를 만들기에 앞서 순서를 확인하면 다음과같다.
+1. props만 받는 카운터 컴포넌트 생성하기
+2. module 디렉토리에 액션타입, 액션생성함수, 리듀서를 작성한 모듈파일을 생성한다.
+3. module 디렉토리에 루트 리듀서 생성하기
+4. index.js에서 스토어를 생성한뒤 provide하기
+5. redux dev tools 연결하기
+6. 카운터 컨테이너에서 커넥트를 통해 상태와 디스패치 함수들을 컴포넌트와 연동하여 받기
+
+
+#### 1. props만 받는 카운터 컴포넌트 생성하기
+```javascript
+Counter.js
+
+import React from "react";
+
+const Counter = ({number, onIncrease, onDecrease}) => {
+   return(
+      <div>
+         <h1>{number}</h1>
+         <div>
+            <button onClick={onIncrease}> +1 </button>
+            <button onClick={onDecrease}> -1 </button>
+         </div>
+      </div>
+   )
+}
+
+export default Counter;
+```
+
+#### 2. module 디렉토리에 액션타입, 액션생성함수, 리듀서등을 작성하기
+
+1. 액션타입 정의하기
+```javascript
+///definition of actions
+
+const INCREASE = 'counter/INCREASE';
+const DECREASE = 'counter/DECREASE';
+
+```
+
+2. 액션생성함수 정의하기
+```javascript
+///definition of actions
+
+const INCREASE = 'counter/INCREASE';
+const DECREASE = 'counter/DECREASE';
+
+///definition of action creator
+
+export const increase = () => {
+   return {
+      type: INCREASE
+   };
+}
+
+export const decrease = () => {
+   return {
+      type: DECREASE
+   }
+}
+```
+
+액션 생성함수는 액션객체를 반환하는 함수이다.
+
+3. 초기상태 작성하기
+
+```javascript
+///definition of actions
+
+const INCREASE = 'counter/INCREASE';
+const DECREASE = 'counter/DECREASE';
+
+///definition of action creator
+
+export const increase = () => {
+   return {
+      type: INCREASE
+   };
+}
+
+export const decrease = () => {
+   return {
+      type: DECREASE
+   }
+}
+
+///create initial state
+const initialState = {
+   number: 0
+};
+
+```
+
+4. 리듀서함수 작성하기
+```javascript
+///definition of actions
+
+const INCREASE = 'counter/INCREASE';
+const DECREASE = 'counter/DECREASE';
+
+///definition of action creator
+
+export const increase = () => {
+   return {
+      type: INCREASE
+   };
+}
+
+export const decrease = () => {
+   return {
+      type: DECREASE
+   }
+}
+
+///create initial state
+const initialState = {
+   number: 0
+};
+
+///create reducer function
+
+function counter(state = initialState, action) {
+   switch(action.type) {
+      case INCREASE:
+         return({
+            number: state.number + 1
+         });
+
+      case DECREASE:
+         return({
+            number: state.number - 1
+         });
+
+      default:
+         return({
+            ...state
+         })
+   }
+}
+
+export default counter;
+```
+
+리듀서 함수에서는 액션의 타입에 따른 상태변화를 다르게 한다.
+액션생성함수와 카운터 리듀서는 컨테이너에서 사용하므로 Export해준다.
+컨테이너는 리듀서를 사용한 상태 접근과 디스패치를 하는 컴포넌트이다.
+
+#### 3. module 디렉토리에 루트 리듀서 생성하기
+여러 리듀서를 사용할 수 있으므로 module디렉토리에 index.js에서 컴바인 해준다.
+컴바인을 통해 생성한 루트리듀서를 src/index.js에서 스토어 생성시에 전달해준다.
+
+```javascript
+import { combineReducers } from 'redux';
+import counter from './counter';
+import todos from './todos';
+
+const rootReducer = combineReducers({
+   counter,
+   todos,
+});
+
+export default rootReducer;
+```
+
+todos라는 리듀서도 사용할 경우 컴바인 해줄 수 있다.
+
+#### 4. index.js에서 스토어를 생성한뒤 provide하기
+
+컴바인한 리듀서함수를 src/index.js에서 스토어 생성시에 전달해준다.
+
+```javascript
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+import { createStore } from 'redux';
+import { Provider } from 'react-redux';
+import rootReducer from './modules';
+import { composeWithDevTools } from 'redux-devtools-extension';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+
+const store = createStore(rootReducer, composeWithDevTools());
+
+root.render(
+  <Provider store={store}>
+    <App />
+  </Provider>
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+
+```
+
+Provider컴포넌트로 App을 감싸주어 App에서 스토어를 이용할 수 있게한다.
+Provider는 react-redux에서 import 할 수 있다.
+
+5. redux dev tools 연결하기
+
+```javascript
+npm install redux-devtools-extension
+```
+다음 명령어로 데브툴을 설치한 후 스토어 생성시 composeWithDevTools()를 전달해준다.
+
+#### 6. 카운터 컨테이너에서 커넥트를 통해 상태와 디스패치 함수들을 컴포넌트와 연동하여 받기
+
+```javascript
+import { connect } from "react-redux";
+import Counter from "../components/Counter"
+import { decrease, increase } from "../modules/counter";
+
+const CounterContainer = ({number, increase, decrease}) => {
+   return(
+      <Counter number={number} onIncrease={increase} onDecrease={decrease}></Counter>
+   )
+}
+
+const mapStateToProps = state => ({
+   number: state.counter.number
+});
+
+const mapDispatchToProps = dispatch => ({
+   increase: () => {
+      dispatch(increase());
+   },
+
+   decrease: () => {
+      dispatch(decrease());
+   }
+})
+
+export default connect(
+   mapStateToProps,
+   mapDispatchToProps,
+)(CounterContainer);
+```
+
+CounterContainer를 App.js에서 사용할 때 props를 전달해주지 않는다. 하지만 우리는 Provider컴포넌트로 App.js를 감싸서 사용할 수 있다고 했다. 스토어에 값을 사용하거나 디스패치하기 위해서는 CounterContainer컴포넌트를 스토어와 connect해주어야 한다.
+
+```javascript
+export default connect(state, dispatch)(CounterContainer);
+```
+
+props중에 number 프로퍼티값을 스토어에서 받아야 한다. 이 형식을 지정해주는 것으로
+```javascript
+state => ({
+  number: state.counter.number
+})
+```
+로 전달해 주어도 된다.
+
+또한 props중에 디스패치 함수를 전달 받기위해서
+```javascript
+dispatch => ({
+  increase: () => {
+    dispatch(increase());
+  },
+
+  decrease: () => {
+    dispatch(decrease());
+  }
+})
+```
+
+로 전달해 주어도 된다.
+
+
+```javascript
+export default connect(
+   ({counter}) => ({
+      number: counter.number
+   }),
+   (dispatch) => ({
+      increase: () => {
+         dispatch(increase());
+      },
+      decrease: () => {
+         dispatch(decrease());
+      }
+   })
+)(CounterContainer);
+```
+
+요약하면 다음과 같다.
+리덕스를 사용하기 위해서는 모듈이라는 디렉토리를 사용한다. 모듈에서는 여러가지 액션타입, 액션생성함수, 여러초기상태, 리듀서함수들이 있는 파일들이 있고 이들을 컴바인 하여 index.js에서 루트리듀서로 존재한다. 루트리듀서는 스토어를 생성할 때 사용하는데 스토는 src/index.js에서 생성할 수 있고 Provider로 감싸 상태관리를 할 수 있다. 리덕스 상태, 디스패치를 사용하는 컴포넌트는 container디렉토리에 위치시키며 스토어와 연동하기 위해서는 connect함수를 사용한다. connect함수의 첫번째 전달인자는 props로 받을 상태의 정의이다. 여러 리듀서가 존재하는 경우 state.counter.number등 특정 리듀서가 담당하는 상태를 props로 받을 수 있다. 또한 두번째 전달인자로는 디스패치하는 함수들을 전달하는데 이는 컨테이너가 props로 전달받는 디스패치함수의 정의이다. 매개변수로 dispatch를 받아 module에서 정의한 액션 생성함수를 사용하여 액션을 디스패치하는 함수들을 정의할 수 있다. 그리고 컨테이너 컴포넌트를 괄호로 감싸주어 스토어와 컴포넌트를 연동한다.
+
+#### 리덕스를 이용하여 간단한 투두리스트 만들기
+과정
+1. todos component생성(props만 전달 받아 사용)
+2. module 생성
+3. store연결
+4. container디자인
+
+```javascript
+import React from "react";
+
+const TodoItem = ({todo, onToggle, onRemove}) => {
+   return (
+      <div>
+         <input type="checkbox" onClick={() => {
+            onToggle(todo.id)
+         }} checked={todo.done} readOnly={true}></input>
+         <span style={{
+            textDecoration: todo.done ? 'line-through' : 'none'
+         }}>{todo.text}</span>
+         <button onClick={() => {
+            onRemove(todo.id)
+         }}>삭제</button>
+      </div>
+   )
+}
+
+const Todos = ({
+   input,
+   todos,
+   onChangeinput,
+   onInsert,
+   onToggle,
+   onRemove
+}) => {
+   const onSubmit = e => {
+      e.preventDefault();
+      onInsert(input);
+      onChangeinput('');
+   }
+
+   const onChange = e => {
+      onChangeinput(e.target.value);
+   }
+
+   return(
+      <div>
+         <form onSubmit={onSubmit}>
+            <input value={input} onChange={onChange}></input>
+            <button type="submit">등록</button>
+         </form>
+         <div>
+            {
+               todos.map(todo => (
+                  <TodoItem todo={todo} key={todo.id} onToggle={onToggle} onRemove={onRemove}></TodoItem>
+               ))
+            }
+         </div>
+      </div>
+   )
+}
+
+export default Todos;
+```
+
+TodoItem은 Todos에서 todo들을 나열할 때 사용하는 컴포넌트이다. 현재 상태와 토글 삭제등의 작업을 할 수 있다. 또한 Todos에서 새로운 todo를 등록할 수 있다. 단순히 props를 받아서 구현하므로 component디렉토리에 위치시킨다.
+
+2. module 생성
+   1. 액션타입 정의
+   2. 액션생성함수 정의
+   3. 리듀서 정의
+
+
+액션 타입은 인풋값변경, 추가, 삭제, 토글 4개의 액션 타입이 존재하며 액션 생성함수도 4개이다. 인풋값 변경과 추가, 삭제, 토글 각각은 매개변수에 따라 상태를 변경한다.
+
+```javascript
+export const changeInput = (input) => ({
+   type: CHANGE_INPUT,
+   input
+});
+```
+
+???? changeInput의 경우 input값은 input에서의 value로 보인다.
+
+```javascript
+export const insert = text => ({
+   type: INSERT,
+   todo: {
+      id: id++,
+      text,
+      done: false,
+   }
+});
+```
+
+insert의 경우 text를 입력받아 생성한 todo를 액션객체에 추가한다.
+
+
+```javascript
+export const toggle = id => ({
+   type: TOGGLE,
+   id
+});
+
+export const remove = id => ({
+   type: REMOVE,
+   id
+});
+```
+
+toggle과 remove각각은 id를 받아 액션객체에 추가한다.
+
+```javascript
+///define action type
+
+const CHANGE_INPUT = 'todos/CHANGE_INPUT';
+const INSERT = 'todos/INSERT';
+const TOGGLE = 'todos/TOGGLE';
+const REMOVE = 'todos/REMOVE';
+
+///define action creator
+
+export const changeInput = (input) => ({
+   type: CHANGE_INPUT,
+   input
+});
+
+let id = 3;
+
+export const insert = text => ({
+   type: INSERT,
+   todo: {
+      id: id++,
+      text,
+      done: false,
+   }
+});
+
+
+export const toggle = id => ({
+   type: TOGGLE,
+   id
+});
+
+export const remove = id => ({
+   type: REMOVE,
+   id
+});
+
+///initial State
+
+const initialState = {
+   input: '',
+   todos: [
+      {
+         id: 1,
+         text: '리덕스 기초 배우기',
+         done: false,
+      },
+      {
+         id: 2,
+         text: '리액트와 리덕스 사용하기',
+         done: false,
+      }
+   ]
+};
+
+function todos(state = initialState, action) {
+   switch(action.type) {
+      case CHANGE_INPUT:
+         return {
+            ...state,
+            input: action.input
+         }
+      
+      case INSERT:
+         return {
+            ...state,
+            todos: state.todos.concat(action.todo)
+         }
+
+      case TOGGLE:
+         return {
+            ...state,
+            todos: state.todos.map(todo => todo.id === action.id ? 
+               { ...todo, done: !todo.done } : todo)
+         };
+      case REMOVE:
+         return {
+            ...state,
+            todos: state.todos.filter(todo => todo.id !== action.id)
+         }
+      
+      default:
+         return state
+   }
+}
+
+export default todos;
+```
+
+3. store연결
+
+```javascript
+import { combineReducers } from 'redux';
+import counter from './counter';
+import todos from './todos';
+
+const rootReducer = combineReducers({
+   counter,
+   todos,
+});
+
+export default rootReducer;
+```
+
+4. container디자인
+
+이제 index.js에서 provider로 감싸면 connect연결을 통해서 store에 접근할 수 있다.
+
+```javascript
+import React from "react";
+import Todos from "../components/Todos";
+import { connect } from "react-redux";
+import {changeInput, insert, toggle, remove} from '../modules/todos';
+
+const TodosContainer = ({
+   input,
+   todos,
+   changeInput,
+   insert,
+   toggle,
+   remove
+}) => {
+   return (
+      <Todos
+      input={input}
+      todos={todos}
+      onChangeinput={changeInput}
+      onInsert={insert}
+      onToggle={toggle}
+      onRemove={remove}
+      ></Todos>
+   )
+}
+
+
+export default connect(
+   ({todos}) => ({
+      input: todos.input,
+      todos: todos.todos
+   }),
+   {
+      changeInput,
+      insert,
+      toggle,
+      remove
+   }
+)(TodosContainer);
+
+```
