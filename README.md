@@ -2682,3 +2682,870 @@ export default connect(
 )(TodosContainer);
 
 ```
+
+action타입에 따른 action객체의 프로퍼티종류를 결정해야하며 리듀서함수에서 액션 타입에 따른 action객체의 프로퍼티를 사용한 상태 변경을 어떻게 할지를 잘 설계해야한다.
+
+
+#### redux actions를 사용하여 액션생성과 리듀서함수를 쉽게 작성하기
+
+기존의 액션생성함수
+
+```javascript
+const INCREASE = 'counter/INCREASE';
+const DECREASE = 'counter/DECREASE';
+
+///definition of action creator
+
+export const increase = () => {
+   return {
+      type: INCREASE
+   };
+}
+
+export const decrease = () => {
+   return {
+      type: DECREASE
+   }
+}
+```
+
+createAction을 사용하여 좀더 간단하게 작성할 수 있다.
+
+```javascript
+const INCREASE = 'counter/INCREASE';
+
+export const increase = createAction(INCREASE);
+export const decrease = createAction(DECREASE);
+```
+
+또한 리듀서함수를 작성할 때 handleActions를 통해서 간단하게 작성할 수 있다.
+
+기존의 리듀서함수
+```javascript
+function counter(state = initialState, action) {
+   switch(action.type) {
+      case INCREASE:
+         return({
+            number: state.number + 1
+         });
+
+      case DECREASE:
+         return({
+            number: state.number - 1
+         });
+
+      default:
+         return({
+            ...state
+         })
+   }
+}
+```
+handleActions를 사용하여 리듀서함수 작성
+
+```javascript
+const counter = handleActions({
+  [INCREASE]: (state, action) => ({
+    number: state.number + 1
+  }),
+  [DECREASE]: (state, action) => ({
+    number: state.number - 1
+  })
+}, initialState);
+```
+
+기존의 리듀서함수에서는 action 타입에 따라 다른 상태를 반환하는 케이스 문을 사용했지만 handleActions를 사용하면 각 타입을 프로퍼티로 하여 state와 action을 매개변수로 받는 화살표함수가 새로운 상태 객체를 반환하도록 할 수 있다.
+
+
+#### todos 모듈에 handleActions와 createAction을 적용
+counter의 경우 action생성시에 추가 데이터를 전송할 필요가 없지만 todos의 경우엔 새로운 todo를 생성하거나 토글 삭제할 때 추가적인 데이터를 전송할 필요가 있다. 추가적인 데이터는 payload라는 이름을 사용한다.
+
+```javascript
+{
+  type: 'SOME_ACTION',
+  payload: 'SOMEDATA'
+}
+```
+
+createAction으로 생성한 액션생성함수에 액션 타입과 매개변수를 받아서 payload는 어떻게 구성할 것인지를 전달해준다.
+
+```javascript
+const MY_ACTION = 'sample/MY_ACTION';
+const myAction = createAction(MY_ACTION, text => `${text}!`);
+const action = myAction('hello');
+```
+
+action객체
+```javascript
+{
+  type: MY_ACTION, payload: 'hello'
+}
+```
+
+todos의 액션생성함수는 두번재 전달인자로 매개변수를 받아서 액션객체에 어떻게 추가할 것인지를 정의해야한다.
+
+```javascript
+export const changeInput = createAction(CHANGE_INPUT, (input) => input);
+
+let id = 3;
+
+export const insert = createAction(INSERT, (text) => ({
+   id: id++,
+   text,
+   done: false
+}));
+
+
+export const toggle = createAction(TOGGLE, (id) => id);
+
+export const remove = createAction(REMOVE, (id) => id);
+```
+
+changeInput의 경우 타입이 CHANGE_INPUT값이며 디스패치할때 전달한 전달인자를 그대로 payload에 담는다.
+
+insert의 경우 타입이 INSERT값이며 디스패치할때 전달한 text값을 이용하여 새로운 todo객체를 생성하여 payload에 담는다.
+
+toggle의 경우 타입이 TOGGLE값이며 디스패치할때 전달한 id값을 그대로 payload에 담는다.
+
+remove의 경우 타입이 REMOVE값이며 디스패치할때 전달한 id값을 그대로 payload에 담는다.
+
+
+#### useSelector를 사용하여 connnect사용하지 않기
+
+Provider를 통해서 스토어 값들의 접근이 가능했으며 컨테이너 컴포넌트를 스토어와 연동하는 connect함수 사용이 필요했다.
+
+useSelector를 사용하면 connect를 사용하지 않고 container component에서 스토어에 접근이 가능하다.
+
+따라서 ContainerComponent에서 props로 전달받는 것이 아닌 내부에서 hook을 통하여 스토어값에 접근할 수 있는 것이다.
+
+CounterContainer에 적용해보자
+
+기존의 코드를 보면 CounterContainer에서 props로 전달받아서 Counter컴포넌트로 전달해준다. 이는 connect함수를 통해 스토어와 연동을 했기 때문에 가능했다.
+
+```javascript
+import { connect } from "react-redux";
+import Counter from "../components/Counter"
+import { decrease, increase } from "../modules/counter";
+
+const CounterContainer = ({number, increase, decrease}) => {
+   return(
+      <Counter number={number} onIncrease={increase} onDecrease={decrease}></Counter>
+   )
+}
+
+
+export default connect(
+   (state) => ({
+      number: state.counter.number
+   }),
+   (dispatch) => ({
+      increase: () => {
+         dispatch(increase());
+      },
+      decrease: () => {
+         dispatch(decrease());
+      }
+   })
+)(CounterContainer);
+```
+
+useSelector를 사용하여 스토어의 상태를 접근할 수 있다.
+또한 useDispatch를 사용하여 리듀서로 디스패치할 수 있다.
+
+#### todos에 handleActions와 createAction적용
+
+```javascript
+import {createAction, handleActions} from 'redux-actions';
+
+///define action type
+
+const CHANGE_INPUT = 'todos/CHANGE_INPUT';
+const INSERT = 'todos/INSERT';
+const TOGGLE = 'todos/TOGGLE';
+const REMOVE = 'todos/REMOVE';
+
+///define action creator
+
+export const changeInput = createAction(CHANGE_INPUT, (input) => input);
+
+let id = 3;
+
+export const insert = createAction(INSERT, (text) => ({
+   id: id++,
+   text,
+   done: false
+}));
+
+
+export const toggle = createAction(TOGGLE, (id) => id);
+
+export const remove = createAction(REMOVE, (id) => id);
+
+///initial State
+
+const initialState = {
+   input: '',
+   todos: [
+      {
+         id: 1,
+         text: '리덕스 기초 배우기',
+         done: false,
+      },
+      {
+         id: 2,
+         text: '리액트와 리덕스 사용하기',
+         done: false,
+      }
+   ]
+};
+
+const todos = handleActions({
+   [CHANGE_INPUT]: (state, {payload: input}) => ({
+      ...state,
+      input
+   }),
+   [INSERT]: (state, {payload: todo}) => ({
+      ...state,
+      todos: state.todos.concat(todo)
+   }),
+   [TOGGLE]: (state, {payload: id}) => ({
+      ...state,
+      todos: state.todos.map(todo => todo.id === id ? {
+         ...todo,
+         done: !todo.done
+      } : todo)
+   }),
+   [REMOVE]: (state, {payload: id}) => ({
+      ...state,
+      todos: state.todos.filter((todo) => todo.id !== id)
+   })
+}, initialState);
+
+// function todos(state = initialState, action) {
+//    switch(action.type) {
+//       case CHANGE_INPUT:
+//          return {
+//             ...state,
+//             input: action.input
+//          }
+      
+//       case INSERT:
+//          return {
+//             ...state,
+//             todos: state.todos.concat(action.todo)
+//          }
+
+//       case TOGGLE:
+//          return {
+//             ...state,
+//             todos: state.todos.map(todo => todo.id === action.id ? 
+//                { ...todo, done: !todo.done } : todo)
+//          };
+//       case REMOVE:
+//          return {
+//             ...state,
+//             todos: state.todos.filter(todo => todo.id !== action.id)
+//          }
+      
+//       default:
+//          return state
+//    }
+// }
+
+export default todos;
+```
+
+Todos container에서는 useSelector와 useDispatch를 사용한다
+
+```javascript
+import React, { useCallback } from "react";
+import Todos from "../components/Todos";
+import { connect, useDispatch, useSelector } from "react-redux";
+import {changeInput, insert, toggle, remove} from '../modules/todos';
+
+const TodosContainer = () => {
+   const {todos, input} = useSelector(state => ({
+      input: state.todos.input,
+      todos: state.todos.todos
+   }));
+   const dispatch = useDispatch();
+
+   const onChangeinput = useCallback((input) => {
+      dispatch(changeInput(input))
+   }, [dispatch]);
+
+   const onInsert = useCallback((text) => {
+      dispatch(insert(text))
+   }, [dispatch]);
+
+   const onToggle = useCallback((id) => {
+      dispatch(toggle(id));
+   }, [dispatch]);
+
+   const onRemove = useCallback((id) => {
+      dispatch(remove(id));
+   },[dispatch]);
+
+   return (
+      <Todos
+      input={input}
+      todos={todos}
+      onChangeinput={onChangeinput}
+      onInsert={onInsert}
+      onToggle={onToggle}
+      onRemove={onRemove}
+      ></Todos>
+   )
+}
+
+
+export default TodosContainer;
+```
+
+### Redux middleware(리덕스 미들웨어)
+리덕스 미들웨어는 액션을 디스패치했을 때 리듀서에서 이를 처리하기에 앞서 사전에 지정된 작업들을 실행합니다. 미들웨어는 액션과 리듀서 사이의 중간자라고 볼 수 있다.
+
+액션 -> 미들웨어 -> 리듀서 -> 스토어
+
+#### 리듀서의 기능
+액션을 콘솔에 단순히 기록하거나, 전달받ㄷ은 액션 정보를 기반으로 액션을 아예 취소하거나, 다른 종류의 액션을 추가로 디스패치할 수 도 있다.
+
+
+#### 로깅 미들웨어
+액션이 디스패치될 때마다 액션의 정보와 액션이 디스패치되기 전후의 상태를 콘솔에 보여주는 미들웨어이다.
+
+```javascript
+const loggerMiddleware = store => next => action => {
+  // 미들웨어의 기본 구조
+}
+
+export default loggerMiddleware;
+```
+
+이 화살표함수들을 풀어쓰면 다음과 같다
+
+```javascript
+const loggerMiddleware = function(store) {
+  return function(next) {
+    return function(action) {
+      ///미들웨어 기본 구조
+    } 
+  }
+}
+```
+
+즉 미들웨어는 함수를 반환하는 함수를 반환하는 함수이다. 함수 파라미터로 받는 store는 리덕스 스토어 인스턴스를 의미하며, action은 디스패치된 액션을 가리킨다. next는 다음 미들웨어로 액션을 넘겨주는 함수역할을 하며 next(action)을 호출하면 다음 미들웨어로 액션을 넘겨준다.
+
+즉 next를 호출하여 다음 미들웨어로 action을 전달하지 않으면 액션이 무시되는 것이다.
+
+로깅미들웨어는 이전상태 액션정보 새로워진 상태를 콘솔로 출력하는 미들웨어이다.
+
+```javascript
+const loggerMiddleware = function(store) {
+   return function(next) {
+      return function(action) {
+         console.group(action && action.type);
+         console.log('이전 상태', store.getState());
+         console.log('액션', action);
+         next(action); /// action이 리듀서에 닿음?
+         console.log('다음 상태', store.getState()); /// 스토어가 수정된 값을 출력함
+         console.groupEnd();
+      }
+   }
+}
+
+export default loggerMiddleware
+```
+
+특정 조건에 따라 액션을 무시하게 하거나 특정 조건에 따라 액션 정보를 가로채서 변경한 후 리듀서에게 전달해 줄 수도 있다. 또한 특정 액션에 대해서 다른 액션을 여러번 디스패치 할 수 도 있다.
+
+#### redux-logger사용하기
+
+```javascript
+npm install redux-logger
+```
+
+리덕스 로거는 로깅미들웨어보다 훨씬 잘 만들어진 라이브러리이며 콘솔도 깔끔하다고 한다.
+
+```javascript
+...
+const logger = createLogger();
+const store = createStore(rootReducer, applyMiddleware(logger));
+
+root.render(
+  <Provider store={store}>
+    <App />
+  </Provider>
+    
+);
+...
+```
+
+#### 비동기 작업을 처리하는 미들웨어 사용
+비동기 작업을 효율적으로 관리하기 위해 오픈소스에 공개된 미들웨어를 사용해보자
+
+#### redux-thunk
+비동기 작업을 처리할 때 가장 기본적으로 사용하는 미들웨어이다.
+
+thunk의 의미는 특정 식을 함수로 래핑해 작업을 지연시키는 것이라고 한다. 식은 정의해놓고 나중에 호출하고 계산함으로서 비동기 처리를 구현하는 미들웨어라고 할 수 있다.
+
+```javascript
+npm install redux-thunk
+```
+
+redux-thunk에서 {thunk}를 import 하여 미들웨어에 추가해준다.
+
+```javascript
+import {thunk} from 'redux-thunk';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+
+const logger = createLogger();
+const store = createStore(rootReducer, applyMiddleware(logger, thunk));
+```
+
+기존의 디스패치 과정은 다음과 같았다.
+
+```javascript
+const onIncrease = useCallback(() => {
+  dispatch(increase());
+})
+
+const onDecrease = useCallback(() => {
+  dispatch(decrease());
+})
+```
+
+increase와 decrease함수는 액션생성함수이며 액션을 디스패치하여 스토어값을 수정했다.
+
+redux-thunk 미들웨어를 이용해서 비동기작업을 수행할 수 있는데
+increase와 decrease 액션을 1초 뒤에 하는 것이다.
+
+```javascript
+export const increaseAsync = function() {
+  return function(dispatch) {
+    setTimeout(() => {
+      dispatch(increase());
+    }, 1000);
+  }
+}
+
+export const decreaseAsync = function() {
+  return function(disptach) {
+    setTimeout(() => {
+      dispatch(decrease());
+    }, 1000);
+  }
+}
+```
+
+교재에서 thunk함수의 예시를 설명하는데 다음과같다.
+
+```javascript
+const sampleThunk = () => (dispatch, getState) => {
+
+}
+```
+
+이를 다시 쓰면
+
+```javascript
+const sampleThunk = function() {
+  return function(dispatch, getState) {
+
+  }
+}
+```
+
+onIncreaseAsync에서 dispatch하기
+
+```javascript
+const onIncreaseAsync = useCallback(() => {
+  dispatch(increaseAsync());
+});
+
+const onDecreaseAsync = useCallback(() => {
+  dispatch(decreaseAsync());
+})
+```
+
+이며 dispatch를 매개변수로 받는 함수를 반환하는 형식이다.
+
+따라서 앞에서 비동기 식으로 요청하는 increaseAsync함수를 보면
+위의 형식과 같은 것을 확인할 수 있다. thunk함수인 것이다.
+
+thunk함수를 호출하여 반환한 함수를 디스패치하면 비동기작업이 시작되는 것같다.
+
+정리하면 다음과 같다
+
+1. thunk를 import해서 미들웨어에 추가한다.
+2. thunk함수 작성하기 형식은 dispatch와 getState를 매개변수로 받는 함수를 반환해야 함
+3. thunk함수 호출하여 반환한 함수를 디스패치한다.
+
+
+#### redux thunk 미들웨어를 사용하여 비동기요청으로 데이터 받기
+
+redux-thunk적용하기
+```javascript
+import {thunk} from 'redux-thunk';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+
+const logger = createLogger();
+const store = createStore(rootReducer, applyMiddleware(logger, thunk));
+
+```
+
+교재에는 
+```javascript
+import {ReduxThunk} from 'redux-thunk';
+```
+라고 표기되어 있지만
+
+```javascript
+import {thunk} from 'redux-thunk';
+```
+로 수정해야한다.
+
+api에 비동기 요청을 하는 axios를 설치해준다.
+
+```javascript
+npm install axios
+```
+
+#### axios요청 함수를 정의해준다.
+
+```javascript
+in lib/api
+import axios from 'axios';
+
+export const getPost = function(id) {
+   return axios.get(`https://jsonplaceholder.typicode.com/posts/${id}`);
+};
+
+export const getUsers = function(id) {
+   return axios.get(`https://jsonplaceholder.typicode.com/users`);
+}
+```
+#### 액션타입을 정의해준다
+
+```javascript
+const GET_POST = 'sample/GET_POST';
+const GET_POST_SUCCESS = 'sample/GET_POST_SUCCESS';
+const GET_POST_FAILURE = 'sample/GET_POST_FAILURE';
+
+const GET_USERS = 'sample/GET_USERS';
+const GET_USERS_SUCCESS = 'sample/GET_USERS_SUCCESS';
+const GET_USERS_FAILURE = 'sample/GET_USERS_FAILURE';
+```
+
+#### thunk함수를 정의해준다.
+
+getPost함수와 getUsers함수가 반환하는 값은 비동기요청으로 얻어진 값이므로 이 함수를 호출하는 경우 async를 붙여야하며 받은 응답은 await문법을 사용해야한다.
+
+Thunk함수를 생성해야한다 앞에서 설명한 것과 같이 함수를 반환해야하는데 반환하는 함수는 dispatch를 매개변수로 받아야 하며 내부에서 디스패치를 할 수도있다.
+
+
+```javascript
+export const getPost = function(id) {
+   return async function(dispatch) {
+      dispatch({
+         type: GET_POST
+      });
+
+      try {
+         const response = await api.getPost(id);
+         dispatch({
+            type: GET_POST_SUCCESS,
+            payload: response.data
+         });
+      } catch(e) {
+         dispatch({
+            type:GET_POST_FAILURE,
+            payload: e,
+            error: true
+         });
+
+         throw e;
+      }
+   }
+}
+
+export const getUsers = function() {
+   return async function(dispatch) {
+      dispatch({
+         type: GET_USERS
+      });
+      try {
+         const response = await api.getUsers();
+         dispatch({
+            type: GET_USERS_SUCCESS,
+            payload: response.data
+         });
+      } catch(e) {
+         dispatch({
+            type: GET_USERS_FAILURE,
+            payload: e,
+            error: true
+         });
+         throw e;
+      }
+   }
+}
+```
+
+getPost함수는 id를 입력받아 비동기요청을 하는 함수를 반환한다. 이 함수를 dispatch로 감싸면 요청이 완료된다.
+
+내부에서는 타입이 GET_POST인 액션을 디스패치한다. 리듀서함수에서 타입이 GET_POST인 요청을 받을 경우 loading을 true로 토글해준다.
+
+또한 try catch문으로 정상적인 응답의 경우 action에 payload값을 채워넣어 디스패치한다.
+비정상적인 응답의 경우 에러값을 payload에 담는다.
+
+#### 초기 상태를 정의해준다.
+```javascript
+const initialState = {
+   loading: {
+      GET_POST: false,
+      GET_USERS: false,
+   },
+   post: '',
+   users: '',
+};
+```
+
+#### 리듀서 함수를 정의해준다
+```javascript
+const sample = handleActions({
+   [GET_POST]: (state) => ({
+      ...state,
+      loading: {
+         ...state.loading,
+         GET_POST: true
+      }
+   }),
+   [GET_USERS]: (state) => ({
+      ...state,
+      loading: {
+         ...state.loading,
+         GET_USERS: true
+      }
+   }),
+   [GET_POST_SUCCESS]: (state, action) => ({
+      ...state,
+      loading: {
+         ...state.loading,
+         GET_POST: false
+      },
+      post: action.payload
+   }),
+   [GET_USERS_SUCCESS]: (state, action) => ({
+      ...state,
+      loading: {
+         ...state.loading,
+         GET_USERS: false,
+      },
+      users: action.payload
+   }),
+   [GET_POST_FAILURE]: (state) => ({
+      ...state,
+      loading: {
+         ...state.loading,
+         GET_POST: false,
+      },
+      // post: action.payload
+   }),
+   [GET_USERS_FAILURE]: (state) => ({
+      ...state,
+      loading: {
+         ...state.loading,
+         GET_USERS: false,
+      },
+      // users: action.payload
+   }),
+}, initialState)
+```
+
+GET_POST타입의 경우
+
+```javascript
+[GET_POST]: (state) => ({
+      ...state,
+      loading: {
+         ...state.loading,
+         GET_POST: true
+      }
+   }),
+```
+
+POST요청을 한 상태이므로 GET_POST의 로딩값을 true로 토글해준다.
+
+GET_POST_SUCCESS타입의 경우
+```javascript
+[GET_POST_SUCCESS]: (state, action) => ({
+  ...state,
+  loading: {
+      ...state.loading,
+      GET_POST: false
+  },
+  post: action.payload
+})
+```
+
+POST요청에 대해서 정상적인 응답을 받은 경우이므로 payload를 post에 넣고 로딩값을 false로 토글해준다.
+
+GET_POST_FAILURE타입의 경우
+```javascript
+[GET_POST_FAILURE]: (state) => ({
+      ...state,
+      loading: {
+         ...state.loading,
+         GET_POST: false,
+      },
+      // post: action.payload
+   }),
+```
+정상적인 응답을 받지 못한 경우이므로 GET_POST의 로딩여부만 토글해준다.
+
+#### module/index.js에서 combineReducers해주기
+```javascript
+import { combineReducers } from 'redux';
+import counter from './counter';
+import sample from './sample';
+
+const rootReducer = combineReducers({
+   counter, sample
+});
+
+export default rootReducer;
+```
+
+#### SampleContainer작성하기
+
+교재에서는 connect함수를 사용했지만 useSelector를 사용하여 간소화하였다.
+![Alt text](image-54.png)
+select관련 워닝이 발생하여 조사해본결과
+![Alt text](image-55.png)
+메모이제이션을 사용하라고 하여 사용했지만 워닝은 계속되었다
+
+```javascript
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import Sample from "../components/Sample";
+import { getPost, getUsers } from '../modules/sample'
+
+const SampleContainer = () => {
+
+   const { loadingPost, loadingUsers, post, users } = useSelector(state => {
+      const ret = {
+         loadingPost: state.sample.GET_POST,
+         loadingUsers: state.sample.GET_USERS,
+         post: state.sample.post,
+         users: state.sample.users
+      }
+      return ret;
+   });
+
+   const dispatch = useDispatch();
+
+   const onClick = () => {
+      dispatch(getPost(1));
+      dispatch(getUsers(1));
+   }
+
+   console.log(post, users, loadingPost, loadingUsers);
+
+   return (
+      <Sample loadingPost={loadingPost} loadingUsers={loadingUsers}
+      post={post} users={users} onClick={onClick}></Sample>
+   )
+}
+
+export default SampleContainer;
+```
+
+useSelector를 통해 loadingPost등 여러 값들을 전달 받았다.
+
+
+
+이 부분에서 시간을 많이 소비하였다.
+교재에서 제공한 코드는 다음과 같았다.
+```javascript
+const dispatch = useDispatch();
+
+   const onClick = () => {
+      getPost(1);
+      getUsers(1);
+   }
+```
+
+getPost(1)함수는 thunk function이다 이는 dispatch를 매개변수로 받는 함수를 반환하며 함수 실행을 하지 않는다.
+getUsers(1)도 마찬가지이다.
+요청조차 하지 않았기에 모든코드를 여러번 확인해본 결과 이 부분이 문제라고 판단했다.
+이전에 예제에서 thunk함수를 dispatch로 호출한 것을 확인하여
+
+다음과 같이 수정하였다.
+
+```javascript
+const dispatch = useDispatch();
+
+   const onClick = () => {
+      dispatch(getPost(1));
+      dispatch(getUsers(1));
+   }
+```
+
+![Alt text](image-56.png)
+
+버튼을 누르니 정상적인 요청이 되었다.
+따라서 thunk function을 dispatch하지 않아 요청조차하지 않았던 것이었다.
+
+#### sample component작성
+```javascript
+import React from "react";
+
+function Sample({ loadingPost, loadingUsers, post, users, onClick}) {
+   return(
+      <div>
+         <button onClick={onClick}>fdfd</button>
+         <section>
+            <h1>post</h1>
+            {
+               loadingPost && 'loading...'
+            }
+            {
+               !loadingPost && post && (
+                  <div>
+                     <h3>{post.title}</h3>
+                     <h3>{post.body}</h3>
+                  </div>
+               )
+            }
+         </section>
+            
+         <section>
+            <h1>users</h1>
+            {
+               loadingUsers && 'loading...'
+            }
+            {
+               !loadingUsers && users && (
+                  <ul>
+                     {
+                        users.map(user => (
+                           <li key={user.id}>
+                              {user.username} ({user.email})
+                           </li>
+                        ))
+                     }
+                  </ul>
+               )
+            }
+         </section>
+      </div>
+   )
+}
+
+export default Sample;
+```
+
+loading의 여부에 따라서 로딩문자열을 출력하거나 응답받은 내용을 출력한다.

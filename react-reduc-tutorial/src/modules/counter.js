@@ -1,21 +1,13 @@
+import {createAction, handleActions} from 'redux-actions';
+
 ///definition of actions
 
 const INCREASE = 'counter/INCREASE';
 const DECREASE = 'counter/DECREASE';
 
 ///definition of action creator
-
-export const increase = () => {
-   return {
-      type: INCREASE
-   };
-}
-
-export const decrease = () => {
-   return {
-      type: DECREASE
-   }
-}
+export const increase = createAction(INCREASE);
+export const decrease = createAction(DECREASE);
 
 ///create initial state
 const initialState = {
@@ -24,23 +16,35 @@ const initialState = {
 
 ///create reducer function
 
-function counter(state = initialState, action) {
-   switch(action.type) {
-      case INCREASE:
-         return({
-            number: state.number + 1
-         });
+const counter = handleActions(
+   {
+      [INCREASE]: (state, action) => ({
+         number: state.number + 1
+      }),
+      [DECREASE]: (state, action) => ({
+         number: state.number - 1
+      })
+   },
+   initialState
+);
 
-      case DECREASE:
-         return({
-            number: state.number - 1
-         });
+// function counter(state = initialState, action) {
+//    switch(action.type) {
+//       case INCREASE:
+//          return({
+//             number: state.number + 1
+//          });
 
-      default:
-         return({
-            ...state
-         })
-   }
-}
+//       case DECREASE:
+//          return({
+//             number: state.number - 1
+//          });
+
+//       default:
+//          return({
+//             ...state
+//          })
+//    }
+// }
 
 export default counter;
