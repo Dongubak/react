@@ -4,10 +4,7 @@ import { decrease, decreaseAsync, increase, increaseAsync } from "../modules/cou
 import Counter from "../components/Counter";
 
 const CounterContainer = () => {
-   const  number  = useSelector(state => {
-      const number = state.number;
-      return number;
-   });
+   const  {number}  = useSelector(state => state.counter);
 
    const dispatch = useDispatch();
 

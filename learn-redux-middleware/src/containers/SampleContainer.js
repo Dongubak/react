@@ -5,15 +5,22 @@ import { getPost, getUsers } from '../modules/sample'
 
 const SampleContainer = () => {
 
-   const { loadingPost, loadingUsers, post, users } = useSelector(state => {
+   const { post, users } = useSelector(state => {
       const ret = {
-         loadingPost: state.sample.GET_POST,
-         loadingUsers: state.sample.GET_USERS,
          post: state.sample.post,
          users: state.sample.users
       }
       return ret;
    });
+
+   const {loadingPost, loadingUsers} = useSelector((state) => {
+      const ret = {
+         loadingPost: state.loading['sample/GET_POST'],
+         loadingUsers: state.loading['sample/GET_USRES'],
+      }
+
+      return ret
+   })
 
    const dispatch = useDispatch();
 

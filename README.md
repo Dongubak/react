@@ -3549,3 +3549,693 @@ export default Sample;
 ```
 
 loading의 여부에 따라서 로딩문자열을 출력하거나 응답받은 내용을 출력한다.
+
+
+#### refactoring thunk function
+
+기존의 thunk함수
+
+```javascript
+export const getPost = function(id) {
+   return async function(dispatch) {
+      dispatch({
+         type: GET_POST
+      });
+
+      try {
+         const response = await api.getPost(id);
+         dispatch({
+            type: GET_POST_SUCCESS,
+            payload: response.data
+         });
+      } catch(e) {
+         dispatch({
+            type:GET_POST_FAILURE,
+            payload: e,
+            error: true
+         });
+
+         throw e;
+      }
+   }
+}
+
+export const getUsers = function() {
+   return async function(dispatch) {
+      dispatch({
+         type: GET_USERS
+      });
+      try {
+         const response = await api.getUsers();
+         dispatch({
+            type: GET_USERS_SUCCESS,
+            payload: response.data
+         });
+      } catch(e) {
+         dispatch({
+            type: GET_USERS_FAILURE,
+            payload: e,
+            error: true
+         });
+         throw e;
+      }
+   }
+}
+```
+
+createRequestThunk함수를 제작하여 USERS와 POST각각으로 분리된 thunk함수를 합쳐서 사용하도록 리팩터링하면
+
+기존의 getPost는 매개변수로 id를 받아서 매개변수로 dispatch를 받아 비동기요청을 수행하는 함수를 반환한다. 따라서 thunk function이다.
+
+매개변수로 type과 요청함수를 매개변수로 받아 id를 받아서 매개변수로 dispatch를 받아 비동기 요청을 수행하는 함수를 반환하면 리팩터링이 끝난다.
+
+구조는 다음과 같다
+
+```javascript
+export default function createRequestThunk(type, request) {
+   /// 타입정의
+
+   return function(id등 매개변수) {
+      return async function(dispatch) {
+         dispatch({
+            타입
+         });
+
+         try {
+            const response = await request(id등 매개변수);
+         }
+         ...
+      }
+   }
+}
+```
+
+즉 미리 타입을 지정하여 id등 매개변수를 받는 thunk함수를 사용했다면 이제는 매개변수로 타입과 요청함수를 지정하여 thunk함수를 생성하는 것이다
+
+코드는 다음과 같다.
+
+```javascript
+export default function createRequestThunk (type, request) {
+   const SUCCESS = `${type}_SUCCESS`;
+   const FAILURE = `${type}_FAILURE`;
+
+   return function(params) {
+      return async function(dispatch) {
+         dispatch({
+            type
+         });
+
+         try {
+            const response = await request(params);
+            ///만약 request가 getPost함수라면 getPost(params)를 호춣함 이는
+            ///axios요청하는 함수임
+            dispatch({
+               type: SUCCESS,
+               payload: response.data
+            });
+         } catch(e) {
+            dispatch({
+               type: FAILURE,
+               payload: e,
+               error: true
+            })
+
+            throw e;
+         }
+      }
+   }
+}
+
+///ex createRequestThunk('GET_USERS', api.getUsers);
+```
+
+#### loading도 따로 만들어보자
+
+```javascript
+
+import { createAction, handleActions } from "redux-actions";
+
+const START_LOADING = 'loading/START_LOADING';
+const FINISH_LOADING = 'loading/FINISH_LOADING';
+
+export const startLoading = createAction(
+   START_LOADING,
+   function(requestType) {
+      return requestType;
+   }
+)
+
+///액션생성함수 호출하면 매개변수를 페이로드에 담는다?
+
+export const finishLoading = createAction(
+   FINISH_LOADING,
+   function(requestType) {
+      return requestType;
+   }
+)
+
+const initialState = {};
+
+const loading = handleActions({
+   [START_LOADING]: (state, action) => ({
+      ...state,
+      [action.payload]: true
+   }),
+   [FINISH_LOADING]: (state, action) => ({
+      ...state,
+      [action.payload]: false,
+   })
+}, initialState)
+
+export default loading;
+```
+
+로딩시작과 끝에 대한 타입을 정의해주고
+액션생성함수를 생성해준다.
+
+기존에 사용하지 않았던 방식을 사용하는데 다음과 같다.
+
+```javascript
+export const startLoading = createAction(
+   START_LOADING,
+   function(requestType) {
+      return requestType;
+   }
+)
+```
+
+기존에 액션을 생성할 때 디스패치할때 액션생성함수를 그냥 호출하여 디스패치하였다.
+하지만 두번째 매개변수로 디스패치할때 액션생성함수에 제공한 매개변수를 페이로드에 담을 수 있다.
+
+따라서 dispath(startLoading(argument))로 사용하는 것이다.
+
+#### loading 리듀서 작성하기
+
+```javascript
+const initialState = {};
+
+const loading = handleActions({
+   [START_LOADING]: (state, action) => ({
+      ...state,
+      [action.payload]: true
+   }),
+   [FINISH_LOADING]: (state, action) => ({
+      ...state,
+      [action.payload]: false,
+   })
+}, initialState)
+```
+
+action.payload로 받을 예정인 타입은 GET_USERS, GET_POST이며
+각각을 필드로 하여 로딩 시작시 true로 끝날 시에 false로 토글해준다.
+
+#### combining reducers
+```javascript
+import { combineReducers } from 'redux';
+import counter from './counter';
+import sample from './sample';
+import loading from './loading';
+
+const rootReducer = combineReducers({
+   counter, sample, loading
+});
+
+export default rootReducer;
+```
+
+#### redux thunk function에서 dispatch하여 사용하기
+
+```javascript
+import { finishLoading, startLoading } from "../modules/loading";
+
+export default function createRequestThunk (type, request) {
+   const SUCCESS = `${type}_SUCCESS`;
+   const FAILURE = `${type}_FAILURE`;
+
+   return function(params) {
+      return async function(dispatch) {
+         dispatch({
+            type
+         });
+
+         dispatch(startLoading(type));
+
+         try {
+            const response = await request(params);
+            ///만약 request가 getPost함수라면 getPost(params)를 호춣함 이는
+            ///axios요청하는 함수임
+            dispatch({
+               type: SUCCESS,
+               payload: response.data
+            });
+            dispatch(finishLoading(type))
+         } catch(e) {
+            dispatch({
+               type: FAILURE,
+               payload: e,
+               error: true
+            })
+            dispatch(startLoading(type));
+            throw e;
+         }
+      }
+   }
+}
+
+///ex createRequestThunk('GET_USERS', api.getUsers);
+```
+
+```javascript
+mport { finishLoading, startLoading } from "../modules/loading";
+
+export default function createRequestThunk (type, request) {
+   const SUCCESS = `${type}_SUCCESS`;
+   const FAILURE = `${type}_FAILURE`;
+
+   return function(params) {
+      return async function(dispatch) {
+         dispatch({
+            type
+         });
+
+         dispatch(startLoading(type));
+         ...
+```
+기존에 리팩터링 했던 redux thunk function에 로딩부분을 추가해주었다
+disptach(startLoading(type)) 부분인데 startLoading함수는 액션 생성함수이며 전달 받은 타입에 해당하는 필드의 값을 startLoading이면 true finishloadingd이면 false로 하여 payload를 담아 디스패치한다.
+
+물론 SampleContainer에서 loading접근시에 사용했던 useSelector도 수정해야한다.
+
+```javascript
+const {loadingPost, loadingUsers} = useSelector((state) => {
+   const ret = {
+      loadingPost: state.loading['sample/GET_POST'],
+      loadingUsers: state.loading['sample/GET_USRES'],
+   }
+
+   return ret
+})
+```
+
+
+### redux-saga
+redux-saga는 까다로운 상황에서 유용하다
+
+1. 기존요청을 취소 처리해야 할 때
+2. 특정 액션이 발생했을 때 다른 액션을 발생시키거나 다른 관계없는 코드들을 실행할 때
+3. 웹소켓을 사용할 때
+4. API요청 실패 시 재요청해야할 때
+
+#### generator function
+
+일반함수의 경우 여러개의 값을 반환하는 것은 불가능하다
+제너레이터 함수는 값을 순차적으로 반환할 수 있다.
+
+saga함수 생성하기
+
+```javascript
+export const increaseAsync = createAction(INCREASE_ASYNC, () => undefined);
+export const decreaseAsync = createAction(DECREASE_ASYNC, () => undefined);
+
+function* increaseSaga() {
+   yield delay(1000);
+   yield put(increase());
+}
+
+function* decreaseSaga() {
+   yield delay(1000);
+   yield put(decrease());
+}
+
+export function* counterSaga() {
+   yield takeEvery(INCREASE_ASYNC, increaseSaga);
+   yield takeLatest(DECREASE_ASYNC, decreaseSaga);
+}
+```
+
+increaseSaga함수와 decreaseSaga함수를 정의해준다. 1초 뒤에 increase 액션생성함수를 호출하여 액션을 디스패치하는데 put을 사용한다.
+
+counterSata함수에 takeEvery에는 increaseAsync를 takeLatest에는 decreaseAsync를 넣어준다.
+두번째 매개변수로 사가함수들을 넣어준다.
+
+takeEvery는 들어오는 모든 액션에 대해 특정 작업을 처리해준다.
+takeLatest는 기존에 진행 중이던 작업이 있다면 취소 처리하고 가장 마지막으로 실행된 작업만 수행한다.
+
+루트사가를 만들어주어 사가함수들을 합쳐준다.
+
+```javascript
+import { combineReducers } from 'redux';
+import counter, { counterSaga } from './counter';
+import { all } from 'redux-saga/effects';
+import sample from './sample';
+import loading from './loading';
+
+const rootReducer = combineReducers({
+   counter, sample, loading
+});
+
+export function* rootSaga() {
+   yield all([counterSaga()]);
+}
+
+export default rootReducer;
+```
+
+saga middleware와 devtools를 연결해주고 미들웨어를 런해준다.
+
+```javascript
+sagaMiddleware.run(rootSaga);
+```
+
+![Alt text](image-57.png)
+![Alt text](image-58.png)
+
+```javascript
+export function* counterSaga() {
+   yield takeEvery(INCREASE_ASYNC, increaseSaga);
+   yield takeLatest(DECREASE_ASYNC, decreaseSaga);
+}
+```
+
+```javascript
+
+function* increaseSaga() {
+   yield delay(1000);
+   yield put(increase());
+}
+
+function* decreaseSaga() {
+   yield delay(1000);
+   yield put(decrease());
+}
+```
+
+
+#### 비동기요청 부분 thunk부분을 saga로 바꿔보기
+
+먼저 액션 생성함수를 다시 작성해준다.
+
+```javascript
+export const getPost = createAction(GET_POST, id => id);
+export const getUsers = createAction(GET_USERS);
+```
+
+사가함수를 작성해준다.
+사가함수는 액션객체를 받아서 payload를 사용하여 비동기 요청을 수행한다.
+
+```javascript
+function* getPostSaga(action) {
+   yield put(startLoading(GET_POST));
+   ///사가함수가 실행하면 로딩이 시작되어 startLoading액션생성함수에 GET_POST를 입력하여 GET_POST 로딩여부를 true로 하는 디스패치함
+
+   try {
+      const post = yield call(api.getPost, action.payload);
+      ///api.getPost(action.payload)와 같다
+      yield put({
+         type: GET_POST_SUCCESS,
+         payload: post.payload
+      });
+      ///성공적으로 응답을 받아서 payload에 실어 dispatch함
+   } catch(e) {
+      yield put({
+         type: GET_POST_FAILURE,
+         payload: e,
+         error: true
+      })
+   }
+   yield put(finishLoading(GET_POST));
+}
+```
+
+#### 사가함수들을 연결하여 sampleSaga를 생성한다.
+
+```javascript
+export function* sampleSaga() {
+   yield takeLatest(GET_POST, getPostSaga);
+   yield takeLatest(GET_USERS, getUsersSaga);
+}
+```
+
+#### 루트사가에 사가함수를 등록해준다.
+
+```javascript
+export function* rootSaga() {
+   yield all([counterSaga(), sampleSaga()]);
+}
+```
+
+#### saga함수 리팩터링
+
+```javascript
+import { call, put } from 'redux-saga/effects';
+import { finishLoading, startLoading } from '../modules/loading';
+
+export default function createRequestSaga(type, request) {
+   const SUCCESS = `${type}_SUCCESS`;
+   const FAILURE = `${type}_FAILURE`;
+
+   return function*(action) {
+      yield put(startLoading(type));
+
+      try {
+         const response = yield call(request, action.payload);
+         yield put({
+            type: SUCCESS,
+            payload: response.data
+         });
+      } catch(e) {
+         yield put({
+            type: FAILURE,
+            payload: e,
+            error: true
+         })
+      }
+      yield put(finishLoading(type));
+   }
+}
+```
+
+```javascript
+export const getPost = createAction(GET_POST, id => id);
+export const getUsers = createAction(GET_USERS);
+
+const getPostSaga = createRequestSaga(GET_POST, api.getPost);
+const getUsersSaga = createRequestSaga(GET_USERS, api.getUsers);
+
+export function* sampleSaga() {
+   yield takeLatest(GET_POST, getPostSaga);
+   yield takeLatest(GET_USERS, getUsersSaga);
+}
+```
+
+### 19. code splitting
+
+리액트 프로제트를 완성하여 사용자에게 제공할 때는 빌드 작업을 거쳐서 배포해야한다.
+
+파일안에 불필요한 주석, 경고 메세지, 공백등을 제거하여 파일 크기를 최소화하거나 브라우저에서 JSX문법이나 다른 최신 자바스크립트 문법이 원활하게 실행되도록 코드의 트랜스파일 작업도 할 수 있다.
+
+정적파일이 있는 경우 정적파일의 경로도 설정된다.
+
+#### webpack
+웹팩은 앞에 기능들을 수행하는 도구이다. 웹팩에서 별도의 설정을 하지 않으면 프로젝트에서 사용중인 자바스크립트 파일이 하나의 파일로 합쳐지고 CSS도 하나의 파일로 합쳐진다.
+
+#### 빌드
+```javascript
+yarn build
+```
+
+리액트 프로젝트를 빌드할 경우 여러개의 자바스크립트파일이 만들어진다.
+
+![Alt text](image-59.png)
+
+이렇게 파일을 분리하는 작업을 코드스플리팅이라고 한다.
+
+프로젝트에 기본 탑재된 SplitChunks기능을 통한 코드 스플리팅은 단순히 효율적인 캐싱 효과만 있을 뿐이다.
+
+#### SPA에서 여러페이지를 개발하는 경우
+사용자가 A페이지에 방문했다면 B와 C페이지에서 사용하는 컴포넌트는 필요가 없다. 하지만 리액트 프로젝트는 별도의 설정을 하지 않으면 A, B, C에서 사용하는 모든 컴포넌트를 한파일에 저장하여 불러온다 이는 로딩도 오래걸리고 사용자 경험도 안 좋아지고 트래픽도 많이 나온다.
+
+#### 코드 비동기 로딩
+코드 스플리팅 방법중 하나인 코드 비동기 로딩은 비동기로딩을 통해 자바스크립트 함수, 객체, 혹은 컴포넌트를 처음에는 불러오지 않고 필요한 시점에 불러와서 사용할 수 있다.
+
+#### import를 상단에서 진행하는 경우
+
+```javascript
+import logo from './logo.svg';
+import './App.css';
+import notify from './notify';
+
+function App() {
+  const onClick = () => {
+    notify();
+  }
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <p onClick={onClick}>Hello React!</p>
+      </header>
+    </div>
+  );
+}
+
+export default App;
+```
+
+이렇게 작성하고 빌드를 진행하면 main파일안에 notify코드가 들어간다.
+
+#### import를 함수형태로 메서드 안에서 사용하는 경우
+
+```javascript
+import logo from './logo.svg';
+import './App.css';
+
+
+function App() {
+  const onClick = () => {
+    import('./notify').then(result => result.default);
+  }
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <p onClick={onClick}>Hello React!</p>
+      </header>
+    </div>
+  );
+}
+
+export default App;
+```
+
+이 경우 실제 함수가 필요한 지점에 파일을 불러와서 함수를 사용할 수 있다.
+
+
+#### React.lazy와 Suspense를 사용하여 컴포넌트를 렌더링 하는 시점에서 비동기적으로 로딩하기
+
+
+비동기적으로 로딩할 컴포넌트 생성
+```javascript
+const SplitMe = () => {
+   return (
+      <div>SplitMe</div>
+   )
+}
+
+export default SplitMe;
+```
+
+React.lazy를 통해 컴포넌트를  렌더링 하는 시점에서 비동기적으로 로딩하기
+```javascript
+const SplitMe = React.lazy(() => import('./SplitMe'));
+```
+
+Suspense는 리액트 내장 컴포넌트이며 로딩이 끝나지 않았을 떄 보여줄 컴포넌트를 지정할 수 있고 Suspense로 감싸 로딩이 끝난후 보여줄 컴포넌트를 보여준다.
+
+```javascript
+<Suspense fallback={<div>loading...</div>}>
+   {visible && <SplitMe></SplitMe>}
+</Suspense>
+```
+
+코드는 다음과 같다.
+
+```javascript
+import logo from './logo.svg';
+import './App.css';
+import { useState } from 'react';
+import { Suspense } from 'react';
+const SplitMe = React.lazy(() => import('./SplitMe'));
+
+function App() {
+  const [visible, setVisible] = useState(false);
+  const onClick = () => {
+    setVisible(true);
+  }
+
+  return (
+    <div className="App">
+      <header className="App-header">
+        <img src={logo} className="App-logo" alt="logo" />
+        <p onClick={onClick}>Hello React!</p>
+        <Suspense fallback={<div>loading...</div>}>
+          {visible && <SplitMe></SplitMe>}
+        </Suspense>
+      </header>
+    </div>
+  );
+}
+
+export default App;
+```
+
+이제 네트워크 속도를 3G로 설정하여 로딩시와 요청완료시에 SplitMe가 나타나는지 확인해보자
+![Alt text](image-60.png)
+![Alt text](image-61.png)
+
+#### Loadable Components를 통한 코드 스플리팅
+
+Loadable component는 코드 스플리팅을 편하게 하도록 도와주는 서드파티 라이브러리이다.
+
+React.lazy와 Suspense는 서버사이드 렌더링을 지원하지 않는다.
+
+서버사이드렌더링이란 다음 장에서 설명한다. 교재의 설명으로는 웹 서비스의 초기 렌더링을 사용자의 브라우저가 아닌 서버 쪽에서 처리하고 서버에서 렌더링한 html결과물을 받아와서 그대로 사용하기 때문에 초기 로딩속도도 개선되고, 검색엔진에서 크롤링하는 것이 가능하다고 한다.
+
+이번장에서는 서버사이드 렌더링없이 Loadable Components의 기본적인 사용법만 다룬다.
+
+설치
+```javascript
+yarn add @loadable/component
+```
+
+SplitMe에 적용
+```javascript
+const SplitMe = loadable(() => import('./SplitMe'));
+
+...
+
+<div className="App">
+   <header className="App-header">
+      <img src={logo} className="App-logo" alt="logo" />
+      <p onClick={onClick}>Hello React!</p>
+      {visible && <SplitMe></SplitMe>}
+   </header>
+</div>
+```
+
+Suspense에서 사용했던 fallback은 SplitMe에 추가해주면 된다.
+
+```javascript
+const SplitMe = loadable(() => import('./SplitMe'), {
+  fallback: <div>Loading...</div>
+});
+```
+
+#### preload메서드로 미리 불러오기
+```javascript
+const onMouseOver = () => {
+   SplitMe.preload();
+}
+...
+<header className="App-header">
+   <img src={logo} className="App-logo" alt="logo" />
+   <p onClick={onClick} onMouseOver={onMouseOver}>Hello React!</p>
+   {visible && <SplitMe></SplitMe>}
+</header>
+```
+
+이제 네이트워크 속도를 조절하여 미리 불러오는지 확인해보자
+
+![Alt text](image-62.png)
+
+마우스를 올리면 미리 로딩을 하고
+
+![Alt text](image-63.png)
+
+누르면 로딩없이 바로 SplitMe가 뜨는 것을 확인할 수 있다.
+
+![Alt text](image-64.png)
+
+### 20. 서버 사이드 렌더링
