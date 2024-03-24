@@ -4275,3 +4275,438 @@ const onMouseOver = () => {
 
 이 문제점을 해결하기 위해 서버사이드 렌더링 후 필요한 파일의 경로를 추출하여 렌더링 결과에 스크립트/스타일 태그를 삽입해주어 문제를 해결한다.
 
+#### 서버사이드 렌더링용 엔트리만들기
+
+서버 사이드 렌더링을 할 때는 서버를 위한 엔트리 파일을 따로 생성해야한다.
+
+```javascript
+index.server.js
+
+import {ReactDOMServer} from 'react-dom/server';
+
+const html = ReactDOMServer.renderToString(
+   <div>Hello Server Side Rendering</div>
+)
+
+console.log(html);
+```
+
+작성한 엔트리 파일을 웹팩으로 불러와 빌드하려면 서버 전용 환경 설정을 만들어야한다.
+config/path.js에 module.exports 부분에 엔트리파일 경로와 웹팩 처리 후 저장 경로 dist를 넣어준다.
+```javascript
+config/path.js
+
+module.exports = {
+...
+ssrIndexJs: resolveApp('src/index.server.js'),
+ssrBuild: resolveApp('dist'),
+...
+}
+```
+
+ssrIndexJs는 파일을 불러올 경로이며 ssrBuild는 웹팩으로 처리한 뒤 결과물을 저장할 경로이다.
+
+
+웹팩 환경설정파일 작성
+```javascript
+const paths = require('./paths');
+
+module.exports = {
+   mode: 'production', ///프로덕션 모드로 설정하여 최적화 옵션 활성화
+   entry: paths.ssrIndexJs, ///엔트리파일 경로
+   target: 'node', ///node환경에서 실행됨을 명시
+   output: {
+      path: paths.ssrBuild, ///빌드 경로
+      filename: 'server.js', ///파일 이름
+      chunkFilename: 'js/[name].chunk.js', ///청크 파일 이름
+      publicPath: paths.publicUrlOrPath, ///정적파일 제공 경로
+   }
+};
+```
+
+빌드할 때 어떤 파일에서 시작해 파일을 불러오는지 어디에 저장할지 정함
+
+#### 로더설정
+
+웹팩의 로더는 파일을 불러올 때 확장자에 맞게 필요한 처리를 해주는 것이며 자바스크립트는 babel을 사용하여 트랜스파일링하고 CSS는 모든 CSS코드를 결합하며 이미지 파일은 파일을 다른 경로에 따로 저장하고 그 파일에 대한 경로를 자바스크립트에서 참조할 수 있게 한다.
+
+```javascript
+in webpack.config.server.js
+
+const nodeExternals = require('webpack-node-externals');
+const paths = require('./paths');
+const webpack = require('webpack');
+const getClientEnvironment = require('./env');
+const getCSSModuleLocalIdent = require('react-dev-utils/getCSSModuleLocalIdent');
+
+const cssRegex = /\.css$/;
+const cssModuleRegex = /\.module\.css$/;
+const sassRegex = /\.(scss|sass)$/;
+const sassModuleRegex = /\.module\.(scss|sass)$/;
+
+const publicUrl = paths.publicUrlOrPath.slice(0, -1);
+const env = getClientEnvironment(publicUrl);
+
+module.exports = {
+  mode: 'production', // 프로덕션 모드로 설정하여 최적화 옵션들을 활성화
+  entry: paths.ssrIndexJs, // 엔트리 경로
+  target: 'node', // node 환경에서 실행 될 것이라는 것을 명시
+  output: {
+    path: paths.ssrBuild, // 빌드 경로
+    filename: 'server.js', // 파일이름
+    chunkFilename: 'js/[name].chunk.js', // 청크 파일이름
+    publicPath: paths.publicUrlOrPath // 정적 파일이 제공 될 경로
+  },
+  module: {
+    rules: [
+      {
+        oneOf: [
+          // 자바스크립트를 위한 처리
+          // 기존 webpack.config.js 를 참고하여 작성
+          {
+            test: /\.(js|mjs|jsx|ts|tsx)$/,
+            include: paths.appSrc,
+            loader: require.resolve('babel-loader'),
+            options: {
+              customize: require.resolve(
+                'babel-preset-react-app/webpack-overrides'
+              ),
+              plugins: [
+                [
+                  require.resolve('babel-plugin-named-asset-import'),
+                  {
+                    loaderMap: {
+                      svg: {
+                        ReactComponent: '@svgr/webpack?-svgo![path]'
+                      }
+                    }
+                  }
+                ]
+              ],
+              cacheDirectory: true,
+              cacheCompression: false,
+              compact: false
+            }
+          },
+
+          // CSS 를 위한 처리
+          {
+            test: cssRegex,
+            exclude: cssModuleRegex,
+            //  exportOnlyLocals: true 옵션을 설정해야 실제 css 파일을 생성하지 않습니다.
+            loader: require.resolve('css-loader'),
+            options: {
+              exportOnlyLocals: true
+            }
+          },
+          // CSS Module 을 위한 처리
+          {
+            test: cssModuleRegex,
+            loader: require.resolve('css-loader'),
+            options: {
+              modules: true,
+              exportOnlyLocals: true,
+              getLocalIdent: getCSSModuleLocalIdent
+            }
+          },
+          // Sass 를 위한 처리
+          {
+            test: sassRegex,
+            exclude: sassModuleRegex,
+            use: [
+              {
+                loader: require.resolve('css-loader'),
+                options: {
+                  exportOnlyLocals: true
+                }
+              },
+              require.resolve('sass-loader')
+            ]
+          },
+          // Sass + CSS Module 을 위한 처리
+          {
+            test: sassRegex,
+            exclude: sassModuleRegex,
+            use: [
+              {
+                loader: require.resolve('css-loader'),
+                options: {
+                  modules: true,
+                  exportOnlyLocals: true,
+                  getLocalIdent: getCSSModuleLocalIdent
+                }
+              },
+              require.resolve('sass-loader')
+            ]
+          },
+          // url-loader 를 위한 설정
+          {
+            test: [/\.bmp$/, /\.gif$/, /\.jpe?g$/, /\.png$/],
+            loader: require.resolve('url-loader'),
+            options: {
+              emitFile: false, // 파일을 따로 저장하지 않는 옵션
+              limit: 10000, // 원래는 9.76KB가 넘어가면 파일로 저장하는데
+              // emitFile 값이 false 일땐 경로만 준비하고 파일은 저장하지 않습니다.
+              name: 'static/media/[name].[hash:8].[ext]'
+            }
+          },
+          // 위에서 설정된 확장자를 제외한 파일들은
+          // file-loader 를 사용합니다.
+          {
+            loader: require.resolve('file-loader'),
+            exclude: [/\.(js|mjs|jsx|ts|tsx)$/, /\.html$/, /\.json$/],
+            options: {
+              emitFile: false, // 파일을 따로 저장하지 않는 옵션
+              name: 'static/media/[name].[hash:8].[ext]'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  resolve: {
+    modules: ['node_modules']
+  },
+  externals: [nodeExternals()],
+  plugins: [
+    new webpack.DefinePlugin(env.stringified) // 환경변수를 주입해줍니다.
+  ]
+};
+```
+
+```javascript
+...
+const publicUrl = paths.publicUrlOrPath.slice(0, -1);
+const env = getClientEnvironment(publicUrl);
+
+module.exports = {
+  mode: 'production', // 프로덕션 모드로 설정하여 최적화 옵션들을 활성화
+  entry: paths.ssrIndexJs, // 엔트리 경로
+  target: 'node', // node 환경에서 실행 될 것이라는 것을 명시
+  output: {
+    path: paths.ssrBuild, // 빌드 경로
+    filename: 'server.js', // 파일이름
+    chunkFilename: 'js/[name].chunk.js', // 청크 파일이름
+    publicPath: paths.publicUrlOrPath // 정적 파일이 제공 될 경로
+...
+```
+
+기존의 교재에는 publicUrlOrPath로 안되어 있음
+
+react, react-dom/server같은 라이브러리를 import구문으로 불러오면 node_modules에서 찾아 사용한다. 라이브러리를 불러오면 빌드할 때 결과물 파일 안에 해당 라이브러리 관련 코드가 함께 번들링된다.
+
+브라우저에서는 결과물 파일에 리액트라이브러리 파일이 있을 필요가 없이 node_modules에서 불러와 사용할 수 있다.따라서 서버를 위해 번들링 할때엔 node_modulesㄹ에서 불러오는 것을 제외하고 번들링하는 것이 좋다. 이를 위해서
+
+```javascript
+yarn add webpack-node-externals
+```
+
+를 설치하여 webpack-node-externals라이브러를 사용해야한다.
+
+```javascript
+in config/webpack.config.server.js
+
+const nodeExternals = require('webpack-node-externals');
+const paths = require('./paths');
+const webpack = require('webpack');
+const getClientEnvironment = require('./env');
+const getCSSModuleLocalIdent = require('react-dev-utils/getCSSModuleLocalIdent');
+
+const cssRegex = /\.css$/;
+const cssModuleRegex = /\.module\.css$/;
+const sassRegex = /\.(scss|sass)$/;
+const sassModuleRegex = /\.module\.(scss|sass)$/;
+
+const publicUrl = paths.publicUrlOrPath.slice(0, -1);
+const env = getClientEnvironment(publicUrl);
+
+module.exports = {
+  mode: 'production', // 프로덕션 모드로 설정하여 최적화 옵션들을 활성화
+  entry: paths.ssrIndexJs, // 엔트리 경로
+  target: 'node', // node 환경에서 실행 될 것이라는 것을 명시
+  output: {
+    path: paths.ssrBuild, // 빌드 경로
+    filename: 'server.js', // 파일이름
+    chunkFilename: 'js/[name].chunk.js', // 청크 파일이름
+    publicPath: paths.publicUrlOrPath // 정적 파일이 제공 될 경로
+  },
+  module: {
+    rules: [
+      {
+        oneOf: [
+          // 자바스크립트를 위한 처리
+          // 기존 webpack.config.js 를 참고하여 작성
+          {
+            test: /\.(js|mjs|jsx|ts|tsx)$/,
+            include: paths.appSrc,
+            loader: require.resolve('babel-loader'),
+            options: {
+              customize: require.resolve(
+                'babel-preset-react-app/webpack-overrides'
+              ),
+              plugins: [
+                [
+                  require.resolve('babel-plugin-named-asset-import'),
+                  {
+                    loaderMap: {
+                      svg: {
+                        ReactComponent: '@svgr/webpack?-svgo![path]'
+                      }
+                    }
+                  }
+                ]
+              ],
+              cacheDirectory: true,
+              cacheCompression: false,
+              compact: false
+            }
+          },
+
+          // CSS 를 위한 처리
+          {
+            test: cssRegex,
+            exclude: cssModuleRegex,
+            //  exportOnlyLocals: true 옵션을 설정해야 실제 css 파일을 생성하지 않습니다.
+            loader: require.resolve('css-loader'),
+            options: {
+              exportOnlyLocals: true
+            }
+          },
+          // CSS Module 을 위한 처리
+          {
+            test: cssModuleRegex,
+            loader: require.resolve('css-loader'),
+            options: {
+              modules: true,
+              exportOnlyLocals: true,
+              getLocalIdent: getCSSModuleLocalIdent
+            }
+          },
+          // Sass 를 위한 처리
+          {
+            test: sassRegex,
+            exclude: sassModuleRegex,
+            use: [
+              {
+                loader: require.resolve('css-loader'),
+                options: {
+                  exportOnlyLocals: true
+                }
+              },
+              require.resolve('sass-loader')
+            ]
+          },
+          // Sass + CSS Module 을 위한 처리
+          {
+            test: sassRegex,
+            exclude: sassModuleRegex,
+            use: [
+              {
+                loader: require.resolve('css-loader'),
+                options: {
+                  modules: true,
+                  exportOnlyLocals: true,
+                  getLocalIdent: getCSSModuleLocalIdent
+                }
+              },
+              require.resolve('sass-loader')
+            ]
+          },
+          // url-loader 를 위한 설정
+          {
+            test: [/\.bmp$/, /\.gif$/, /\.jpe?g$/, /\.png$/],
+            loader: require.resolve('url-loader'),
+            options: {
+              emitFile: false, // 파일을 따로 저장하지 않는 옵션
+              limit: 10000, // 원래는 9.76KB가 넘어가면 파일로 저장하는데
+              // emitFile 값이 false 일땐 경로만 준비하고 파일은 저장하지 않습니다.
+              name: 'static/media/[name].[hash:8].[ext]'
+            }
+          },
+          // 위에서 설정된 확장자를 제외한 파일들은
+          // file-loader 를 사용합니다.
+          {
+            loader: require.resolve('file-loader'),
+            exclude: [/\.(js|mjs|jsx|ts|tsx)$/, /\.html$/, /\.json$/],
+            options: {
+              emitFile: false, // 파일을 따로 저장하지 않는 옵션
+              name: 'static/media/[name].[hash:8].[ext]'
+            }
+          }
+        ]
+      }
+    ]
+  },
+  resolve: {
+    modules: ['node_modules']
+  },
+  externals: [nodeExternals()],
+  plugins: [
+    new webpack.DefinePlugin(env.stringified) // 환경변수를 주입해줍니다.
+  ]
+};
+```
+
+
+#### 빌드 스크립트 작성하기
+```javascript
+in scripts/build.server.js
+process.env.BABEL_ENV = 'production';
+process.env.NODE_ENV = 'production';
+
+process.on('unhandledRejection', err => {
+  throw err;
+});
+
+require('../config/env');
+const fs = require('fs-extra');
+const webpack = require('webpack');
+const config = require('../config/webpack.config.server');
+const paths = require('../config/paths');
+
+function build() {
+  console.log('Creating server build...');
+  fs.emptyDirSync(paths.ssrBuild);
+  let compiler = webpack(config);
+  return new Promise((resolve, reject) => {
+    compiler.run((err, stats) => {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      console.log(stats.toString());
+    });
+  });
+}
+
+build();
+```
+
+package.json수정
+
+```json
+...
+"scripts": {
+    "start": "node scripts/start.js",
+    "build": "node scripts/build.js",
+    "test": "node scripts/test.js",
+    "start:server": "node dist/server.js",
+    "build:server": "node scripts/build.server.js"
+  },
+...
+```
+
+빌드가 되는 지 확인해보기
+
+```npm
+$ node scripts/build.server.js
+$ node dist/server.js
+```
+
+빌드스크립트로 서버 빌드 후 시작하기
+
+```npm
+$ npm run build:server
+$ npm run start:server
+```
+
