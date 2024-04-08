@@ -84,7 +84,7 @@ const hasJsxRuntime = (() => {
     return false;
   }
 })();
-
+const LoadablePlugin = require('@loadable/webpack-plugin');
 // This is the production and development configuration.
 // It is focused on developer experience, fast rebuilds, and a minimal bundle.
 module.exports = function (webpackEnv) {
@@ -415,7 +415,7 @@ module.exports = function (webpackEnv) {
                   [
                     require.resolve('babel-preset-react-app'),
                     {
-                      runtime: hasJsxRuntime ? 'automatic' : 'classic',
+                      runtime: 'automatic',
                     },
                   ],
                 ],
@@ -563,6 +563,7 @@ module.exports = function (webpackEnv) {
       ].filter(Boolean),
     },
     plugins: [
+      new LoadablePlugin(),
       // Generates an `index.html` file with the <script> injected.
       new HtmlWebpackPlugin(
         Object.assign(

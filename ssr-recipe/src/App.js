@@ -1,9 +1,10 @@
-import logo from './logo.svg';
+import React from 'react';
 import './App.css';
 import Menu from './components/Menu';
 import { Route, Routes } from 'react-router-dom';
-import RedPage from './pages/RedPage';
-import BluePage from './pages/BluePage';
+import loadable from '@loadable/component';
+const RedPage = loadable(() => import('./pages/RedPage'));
+const BluePage = loadable(() => import('./pages/BluePage'));
 
 function App() {
   return (

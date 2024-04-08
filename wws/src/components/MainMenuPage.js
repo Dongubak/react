@@ -2,9 +2,8 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 
-const MainMenuPage = () => {
-   const isLoggedIn = true;
-
+const MainMenuPage = ({isLoggedIn}) => {
+   console.log(isLoggedIn);
    const navigate = useNavigate();
 
    const onEditpage = () => {
