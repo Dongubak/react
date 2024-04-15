@@ -4,7 +4,7 @@ import { authService } from '../../fbInstance'
 import { useNavigate } from 'react-router';
 import { useDispatch } from 'react-redux';
 import { startLogin } from '../../modules/login';
-import Login from '../../components/Login';
+import Login from '../../components/Auth/Login';
 
 
 
@@ -24,22 +24,22 @@ const LoginContainer = () => {
     }))
    }, []);
 
-   const fetchTest = async () => {
-    const response = await fetch('http://localhost:3001/login', {
-          method: 'GET',
-    });
-    const data = await response.json();
-    console.log(data);
-   }
+  //  const fetchTest = async () => {
+  //   const response = await fetch('http://localhost:3001/login', {
+  //         method: 'GET',
+  //   });
+  //   const data = await response.json();
+  //   console.log(data);
+  //  }
 
-   useEffect(() => {
-    authService.onAuthStateChanged((user) => {
-      if (user) 
-        navigator('/');
-    });
+  //  useEffect(() => {
+  //   authService.onAuthStateChanged((user) => {
+  //     if (user) 
+  //       navigator('/');
+  //   });
 
-    fetchTest();
-  }, [dispatch, navigator]);
+  //   fetchTest();
+  // }, [dispatch, navigator]);
 
   const onSignIn = useCallback(() => {
     navigator('/signIn', {replace: true});

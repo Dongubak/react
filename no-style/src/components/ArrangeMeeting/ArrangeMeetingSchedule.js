@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
-import { stringToColorHash } from '../modules/color';
+import { stringToColorHash } from '../../modules/color';
+import { doc, getDoc } from 'firebase/firestore';
+import { clearSelect, initLesson } from '../../modules/lesson';
+import { db } from '../../fbInstance';
+import { addUser } from '../../modules/users';
 
 // styled-components로 스타일을 정의합니다.
 const TimetableWrapper = styled.div`
   display: grid;
   grid-template-areas: ". week"
                        "time content";
-  grid-template-columns: 60px;
+  grid-template-columns: 60qpx;
   grid-template-rows: 30px;
   /* width: 30vw;
   height: 70vh; */
@@ -72,8 +76,12 @@ const theme = {
  };
 
 // Timetable 컴포넌트를 정의합니다.
-const Schedule = () => {
-   const lessons = useSelector(state => state.lessons.lessons);
+const ArrangeMeetingSchedule = () => {
+   const dispatch = useDispatch();
+   
+   const {users} = useSelector((state) => state.users);
+   console.log(users);
+
    const [schedule, setSchedule] = useState([
       [...Array(5)],
       [...Array(5)],
@@ -99,7 +107,7 @@ const Schedule = () => {
          [...Array(5)],
          [...Array(5)],
       ]
-      lessons.forEach((e) => {
+      users.forEach((e) => {
          const ret = (e.time).match(regex) || [];
          const subject = e.subject;
 
@@ -110,7 +118,7 @@ const Schedule = () => {
                const [day1, time] = day;
                const times = time.split(',').map(Number); // 쉼표로 구분된 숫자를 배열로 변환
                
-               
+               console.log(day1, times);
                switch(day1) {
                   case '월':
                      times.forEach(e => {
@@ -160,7 +168,7 @@ const Schedule = () => {
             const [day1, time] = day;
             const times = time.split(',').map(Number); // 쉼표로 구분된 숫자를 배열로 변환
             
-            
+            console.log(day1, times);
             switch(day1) {
                case '월':
                   times.forEach(e => {
@@ -203,7 +211,7 @@ const Schedule = () => {
          })
       })
       setSchedule(prev);
-   }, [lessons]);
+   }, [users]);
 
 
   return (
@@ -241,4 +249,4 @@ const Schedule = () => {
   );
 };
 
-export default Schedule;
+export default ArrangeMeetingSchedule;

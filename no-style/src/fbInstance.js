@@ -18,10 +18,7 @@ const firebaseConfig = {
   appId: process.env.REACT_APP_FIREBASE_APP_ID,
   measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID
 };
-/*
-ip포트번호로 통신하고 싶은데 통신이 안된다.
-포트 번호를 따로 관리해서 막아놨냐
-*/
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router';
 import { insertLesson } from '../../modules/lesson';
-import LessonDetail from '../../components/LessonDetail';
+import LessonDetail from '../../components/setTimeTable/LessonDetail';
 
 const LessonDetailContainer = () => {
    const {index} = useParams();

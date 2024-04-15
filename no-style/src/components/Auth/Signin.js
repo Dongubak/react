@@ -103,6 +103,7 @@ const Signin = ({
             <p><input className="login" type="text" name="email" placeholder="아이디" onChange={onChange} /></p>
             <p><input className="login" type="password" name="password" placeholder="비밀번호" onChange={onChange} /></p>
             <p><input className="login" type="password" name="password2" placeholder="비밀번호 확인" onChange={onChange} /></p>
+            <p><input className="login" type="text" name="displayName" placeholder="학번" onChange={onChange} /></p>
 
             <p><button  type="submit" onClick={onClick}>회원가입</button></p>
             </div>

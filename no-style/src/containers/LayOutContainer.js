@@ -1,9 +1,12 @@
 import { useDispatch, useSelector } from "react-redux";
-import Layout from "../../components/Layout";
+import Layout from "../components/Layout";
 import { useLocation, useNavigate } from "react-router";
-import { startLogout } from "../../modules/login";
-import {deleteLesson, saveLesson} from '../../modules/lesson'
-import { useCallback } from "react";
+import { startLogout } from "../modules/login";
+import {clearSelect, deleteLesson, initLesson, saveLesson} from '../modules/lesson'
+import { useCallback, useEffect } from "react";
+import { authService, db } from "../fbInstance";
+import useAuthStateChanged from "../modules/useAuthStateChanged";
+import { doc, getDoc } from "firebase/firestore";
 const LayOutContainer = () => {
    const dispatch = useDispatch();
    const {lessons} = useSelector((state) => state.lessons);
@@ -30,6 +33,7 @@ const LayOutContainer = () => {
    }, [])
 
    const { email } = useSelector((state) => state.login);
+   
 
    return (
       <Layout lessons={lessons} 

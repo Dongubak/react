@@ -1,19 +1,24 @@
 import './App.css';
-
-import ArrangeMeeting from './containers/arrangeMeeting/ArrangeMeeting';
 import LoginContainer from './containers/Auth/LoginContainer';
-import { Route, Routes } from 'react-router';
+import { Route, Routes, useNavigate } from 'react-router';
 import NotFound from './containers/NotFound';
 
 import WelcomeContainer from './containers/WelcomContainer';
-import LayOutContainer from './containers/arrangeMeeting/LayOutContainer';
+import LayOutContainer from './containers/LayOutContainer';
 import SetTimeTableContainer from './containers/setTimeTable/SetTimeTableContainer';
 import LessonDetailContainer from './containers/setTimeTable/LessonDetailContainer';
 import SigninContainer from './containers/Auth/SigninContainer';
-
+import { authService } from './fbInstance';
+import { useDispatch } from 'react-redux';
+import useAuthStateChanged from './modules/useAuthStateChanged';
+import ArrangeMeetingContainer from './containers/arrangeMeeting/ArranageMeetingContainer';
+import Sample from './Sample';
 
 function App() {
-
+  const navigator = useNavigate();
+  const dispatch = useDispatch();
+  useAuthStateChanged(authService, navigator, dispatch);
+  
   return (
     <>
         <Routes>
@@ -24,7 +29,7 @@ function App() {
             <Route path='/setTimeTable' element={<SetTimeTableContainer></SetTimeTableContainer>}>
               <Route path=':index' element={<LessonDetailContainer></LessonDetailContainer>}></Route>
             </Route>
-            <Route path='/arrageMeeting' element={<ArrangeMeeting></ArrangeMeeting>}></Route>
+            <Route path='/arrangeMeeting' element={<ArrangeMeetingContainer></ArrangeMeetingContainer>}></Route>
             <Route path="*" element={<NotFound></NotFound>}></Route>
           </Route>
         </Routes>

@@ -80,7 +80,7 @@ function* saveSaga(action) {
       const userDocRef = yield doc(collection(db, 'user'), uid);
       setDoc(userDocRef, {
          table: lessons
-      });
+      }, { merge: true });
       yield put({
          type: SAVE_LESSON_SUCCESS,
       })
@@ -89,7 +89,7 @@ function* saveSaga(action) {
          type: SAVE_LESSON_FAILURE,
       })
    }
-   put(finishLoading('lesson'));
+   yield put(finishLoading('lesson'));
 }
 
 export function* lessonSaga() {

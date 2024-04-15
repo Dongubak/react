@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { authService, db } from '../../fbInstance';
 import { useNavigate } from 'react-router';
 import { collection, doc, setDoc } from 'firebase/firestore';
-import Signin from '../../components/Signin';
+import Signin from '../../components/Auth/Signin';
 
 
 function SigninContainer() {
@@ -12,6 +12,7 @@ function SigninContainer() {
       email: '',
       password: '',
       password2: '',
+      displayName: '',
    });
 
    const onChange = useCallback((e) => {
@@ -24,7 +25,7 @@ function SigninContainer() {
    const navigator = useNavigate();
 
    const onClick = async () => {
-      const {email, password, password2 } = signinInfo;
+      const {email, password, password2, displayName} = signinInfo;
       let data;
       if(password !== password2) {
          alert('비밀번호 두개가 다름');
@@ -35,7 +36,7 @@ function SigninContainer() {
             data = await createUserWithEmailAndPassword(authService, email, password);
             
             const userDocRef = doc(collection(db, 'user'), data.user.uid);
-            setDoc(userDocRef, {table: []});
+            setDoc(userDocRef, {displayName: displayName, table: []});
          } catch(e) {
             if(e.code === 'auth/invalid-email') {
                alert('이미 존재하는 이메일이거나 이메일 형식이 아닙니다');

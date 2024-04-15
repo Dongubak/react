@@ -4,14 +4,13 @@ import { authService, db } from "../../fbInstance";
 import { Outlet, useNavigate } from "react-router";
 import { useDispatch, useSelector } from "react-redux";
 import { clearSelect, initLesson, selectLesson } from "../../modules/lesson";
-import SetTimeTable from "../../components/SetTimeTable";
-import LessonList from "../../components/LessonList";
+import SetTimeTable from "../../components/setTimeTable/SetTimeTable";
+import LessonList from "../../components/setTimeTable/LessonList";
 import useAuthStateChanged from "../../modules/useAuthStateChanged";
 
 
 
 const SetTimeTableContainer = () => {
-   const navigator = useNavigate();
    const {select} = useSelector(state => state.lessons);
    const {uid} = useSelector(state => state.login);
 
@@ -45,14 +44,6 @@ const SetTimeTableContainer = () => {
       return querySnapshot;
   }
 
-   // const onSearch = useCallback(async (e) => {
-   //    e.preventDefault();
-   //    const q = collection(db, 'App');
-   //    const querySnapshot = query(q, where(type, '>=', value), where(type, '<=', value + '\uf8ff'));
-   //    const data = await getDocs(querySnapshot);
-   //    setDatas(data.docs.map(doc => doc.data()));
-   //    await dispatch(selectLesson(datas));
-   // }, [onChange]);
 
    const onCheckOnlyOne = useCallback((checkThis) => {
       const checkboxes = document.getElementsByName('filter')
@@ -64,31 +55,19 @@ const SetTimeTableContainer = () => {
       setType(checkThis.target.value);
     }, [type]);
 
-   //  const initRender = async () => {
-   //       try {
-   //          const q = collection(db, 'App');
-   //          const querySnapshot = await getDocs();
-   //          const data = querySnapshot.docs.map(doc => doc.data());
-   //          await dispatch(selectLesson(data));
-   //       } catch (error) {
-   //             console.error('Error while searching:', error);
-   //       }
    
-   //  }
-   
-   
-    useEffect(() => {
+
+   useEffect(() => {
       (async function() {
          const docRef = doc(db, 'user', uid);
          const docSnap = await getDoc(docRef);
          await dispatch(initLesson(docSnap.data().table));
       })();
-
+   
       return () => {
          dispatch(clearSelect());
       }
-    }, [])
-    
+   }, []);
 
    return (
       <div>

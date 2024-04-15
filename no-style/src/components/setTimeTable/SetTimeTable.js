@@ -64,7 +64,8 @@ const SetTimeTable = ({onChange, onCheckOnlyOne, onSearch,
       <SetTimeTableBlock>
          <form className="form" onSubmit={onSearch}>
             <InputWrapper>
-               <input value={value} onChange={onChange} className="keyword_search"></input>
+               <input value={value} onChange={onChange} 
+               className="keyword_search"></input>
                <IoSearchSharp className="search_btn" onClick={onSearch}/>
             </InputWrapper>
             

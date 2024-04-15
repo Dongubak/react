@@ -4,8 +4,9 @@ import { RiLogoutBoxRLine } from "react-icons/ri";
 import { IoArrowBackOutline } from "react-icons/io5";
 import { IoHomeOutline } from "react-icons/io5";
 
-import CartList from "./CartList";
+import CartList from "./setTimeTable/CartList";
 import Schedule from "./Schedule";
+import ArrangeMeetingSchedule from "./ArrangeMeeting/ArrangeMeetingSchedule";
 
 const LayoutWrapper = styled.div`
    display: flex;
@@ -97,6 +98,7 @@ const Layout = ({onGoback, onLogout, email, currentLocation,
    onSave,
    onGoHome
 }) => {
+   console.log(currentLocation);
    return(
       <LayoutWrapper>
          <LayoutBlock>
@@ -132,6 +134,18 @@ const Layout = ({onGoback, onLogout, email, currentLocation,
                : null
             }
          </>
+
+         {
+            currentLocation === '/arrangeMeeting' ? (
+               <>
+                  <LayoutBlock2 className="timetable">
+                     console.log('hello');
+                     {/* <ArrangeMeetingSchedule></ArrangeMeetingSchedule> */}
+                  </LayoutBlock2>
+               </> 
+            ) : null
+
+         }
          
          
       </LayoutWrapper>
