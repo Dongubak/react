@@ -98,7 +98,7 @@ const Layout = ({onGoback, onLogout, email, currentLocation,
    onSave,
    onGoHome
 }) => {
-   console.log(currentLocation);
+   
    return(
       <LayoutWrapper>
          <LayoutBlock>
@@ -136,11 +136,10 @@ const Layout = ({onGoback, onLogout, email, currentLocation,
          </>
 
          {
-            currentLocation === '/arrangeMeeting' ? (
+            currentLocation === '/arrageMeeting' ? (
                <>
                   <LayoutBlock2 className="timetable">
-                     console.log('hello');
-                     {/* <ArrangeMeetingSchedule></ArrangeMeetingSchedule> */}
+                     <ArrangeMeetingSchedule></ArrangeMeetingSchedule>
                   </LayoutBlock2>
                </> 
             ) : null

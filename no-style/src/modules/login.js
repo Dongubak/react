@@ -28,6 +28,7 @@ function* loginSaga(action) {
          type: LOGIN_SUCCESS,
          payload: response.user
       });
+      yield localStorage.setItem("uid", response.user.uid);
    } catch(e) {
       yield put({
          type: LOGIN_FAILURE,

@@ -17,7 +17,7 @@ const UserListContainer = ({users}) => {
 
    useEffect(() => {
       (async function() {
-         const docRef = doc(db, 'user', uid);
+         const docRef = doc(db, 'user', localStorage.getItem("uid"));
          const docSnap = await getDoc(docRef);
          await dispatch(initUser(docSnap.data().table));
       })();

@@ -14,6 +14,7 @@ const useAuthStateChanged = (authService, navigator, dispatch) => {
       } else {
         // 로그아웃 된 상태일 경우
         navigator('/login');
+        localStorage.removeItem("uid");
       }
     });
 

@@ -29,7 +29,7 @@ function App() {
             <Route path='/setTimeTable' element={<SetTimeTableContainer></SetTimeTableContainer>}>
               <Route path=':index' element={<LessonDetailContainer></LessonDetailContainer>}></Route>
             </Route>
-            <Route path='/arrangeMeeting' element={<ArrangeMeetingContainer></ArrangeMeetingContainer>}></Route>
+            <Route path='/arrageMeeting' element={<ArrangeMeetingContainer></ArrangeMeetingContainer>}></Route>
             <Route path="*" element={<NotFound></NotFound>}></Route>
           </Route>
         </Routes>
