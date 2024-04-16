@@ -35,20 +35,6 @@ const SigninBlock = styled.div`
       transition: .2s;
       width: 75%;
    }
-   .btn {
-      border: none;
-      width: 75%;
-      background-color: rgb(68, 112, 67);
-      color: white;
-      padding: 15px 0;
-      font-weight: 600;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: .2s;
-    }
-    .btn:hover {
-      background-color: rgb(49, 82, 48);
-    }
 
    button{
       border-radius: 3px;
